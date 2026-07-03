@@ -1,0 +1,4065 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>再塑通 AI · 废塑料智能撮合 v5</title>
+<style>
+/* =================================================================
+   CSS Variables & Reset
+   ================================================================= */
+:root {
+  --primary: #059652;
+  --primary-dark: #047A40;
+  --primary-darker: #059048;
+  --primary-light: #e8f8ef;
+  --primary-light2: #d4f4e4;
+  --bg: #f5f5f5;
+  --card: #ffffff;
+  --text: #1a1a1a;
+  --text-secondary: #666666;
+  --text-hint: #666666;
+  --text-disabled: #949494;
+  --border: #e8e8e8;
+  --border-light: #f0f0f0;
+  --danger: #fa5151;
+  --danger-light: #fff0f0;
+  --warning: #ffc300;
+  --warning-light: #fff9e6;
+  --info: #1989fa;
+  --info-light: #e8f4ff;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-xs: 4px;
+  --radius-lg: 16px;
+  --bottom-nav-h: 64px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --font-mono: 'SF Mono','Menlo','Consolas','Liberation Mono',monospace;
+  --transition: .25s cubic-bezier(0.4,0,0.2,1);
+  --container-max: 800px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans SC',sans-serif;
+  background:var(--bg);color:var(--text);line-height:1.6;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+  overflow-x:hidden;overscroll-behavior:none;
+  min-height:100vh;
+}
+ul,ol{list-style:none}
+a{text-decoration:none;color:inherit}
+button,input,textarea,select{font-family:inherit;border:none;outline:2px solid transparent;background:transparent;font-size:inherit;color:inherit}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline-color:var(--primary)}
+button{cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+img{max-width:100%;display:block}
+
+/* =================================================================
+   App Shell — FULL VIEWPORT, NO PHONE FRAME
+   ================================================================= */
+.app-container{
+  width:100%;max-width:var(--container-max);margin:0 auto;
+  min-height:100vh;background:var(--bg);position:relative;
+  padding-bottom:calc(var(--bottom-nav-h) + var(--safe-bottom) + 16px);
+}
+@media(min-width:801px){
+  .app-container{
+    border-left:1px solid var(--border);border-right:1px solid var(--border);
+  }
+}
+
+/* =================================================================
+   Top Bar
+   ================================================================= */
+.top-bar{
+  position:sticky;top:0;z-index:100;background:rgba(255,255,255,0.92);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  padding:10px 16px;padding-top:calc(env(safe-area-inset-top,0px) + 10px);display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border-light);
+}
+.top-bar .logo{font-weight:700;font-size:18px;color:var(--primary);display:flex;align-items:center;gap:6px;letter-spacing:-0.3px}
+.top-bar .logo .dot{width:8px;height:8px;border-radius:50%;background:var(--primary);animation:pulse-dot 2s infinite}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(1.5)}}
+.top-bar .badge{font-size:11px;background:var(--primary-light);color:var(--primary);padding:5px 12px;border-radius:20px;font-weight:600;letter-spacing:0.5px;cursor:pointer;min-height:32px;display:flex;align-items:center;}
+.top-bar .status-dot{width:7px;height:7px;border-radius:50%;background:var(--primary);display:inline-block;margin-right:4px;animation:pulse-dot 2s infinite}
+.top-bar .network-status{font-size:11px;color:var(--text-hint);display:flex;align-items:center;gap:4px}
+
+/* =================================================================
+   Bottom Navigation — STICKS TO VIEWPORT BOTTOM
+   ================================================================= */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:100;
+  width:100%;max-width:var(--container-max);margin:0 auto;
+  background:rgba(255,255,255,0.95);border-top:1px solid var(--border-light);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  display:flex;height:var(--bottom-nav-h);padding-bottom:var(--safe-bottom);
+}
+.bottom-nav .tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;font-size:11px;color:var(--text-hint);transition:color var(--transition);
+  cursor:pointer;-webkit-tap-highlight-color:transparent;position:relative;
+  min-height:44px;
+}
+.bottom-nav .tab.active{color:var(--primary);font-weight:600}
+.bottom-nav .tab.active::after{
+  content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:20px;height:3px;border-radius:0 0 3px 3px;background:var(--primary);
+}
+.bottom-nav .tab .icon{font-size:22px;line-height:1;transition:transform var(--transition)}
+.bottom-nav .tab.active .icon{transform:scale(1.1)}
+.bottom-nav .tab .badge-dot{
+  position:absolute;top:6px;right:calc(50% - 22px);width:8px;height:8px;
+  border-radius:50%;background:var(--danger);display:none;
+}
+.bottom-nav .tab .badge-dot.show{display:block}
+
+/* =================================================================
+   Pages
+   ================================================================= */
+.page{display:none;padding:16px;animation:fadeSlideIn .35s cubic-bezier(0.4,0,0.2,1)}
+.page.active{display:block}
+@keyframes fadeSlideIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* =================================================================
+   AI Input Area
+   ================================================================= */
+.ai-input-card{
+  background:var(--card);border-radius:var(--radius);padding:16px;
+  box-shadow:0 1px 3px rgba(0,0,0,0.03);margin-bottom:12px;
+}
+.ai-input-card textarea{
+  width:100%;min-height:84px;padding:12px;font-size:15px;line-height:1.6;
+  background:var(--bg);border-radius:var(--radius-sm);
+  resize:none;border:2px solid transparent;transition:border var(--transition);
+}
+.ai-input-card textarea:focus{background:#fff;border-color:var(--primary)}
+.ai-input-card .input-footer{display:flex;align-items:center;justify-content:space-between;margin-top:10px;flex-wrap:wrap;gap:8px}
+.ai-input-card .quick-chips{display:flex;gap:6px;flex-wrap:wrap}
+.ai-input-card .quick-chip{
+  font-size:11px;padding:6px 12px;border-radius:20px;
+  background:var(--bg);color:var(--text-secondary);
+  cursor:pointer;transition:all var(--transition);white-space:nowrap;
+  min-height:32px;display:flex;align-items:center;
+}
+.ai-input-card .quick-chip:hover{background:var(--primary-light);color:var(--primary)}
+.ai-input-card .quick-chip:active{transform:scale(0.96)}
+.send-btn{
+  background:var(--primary);color:#fff;border-radius:var(--radius-sm);
+  padding:10px 24px;font-weight:600;font-size:14px;min-height:44px;min-width:80px;
+  box-shadow:0 2px 8px rgba(7,193,96,0.3);transition:all var(--transition);
+  display:flex;align-items:center;gap:6px;
+}
+.send-btn:hover{background:var(--primary-dark);box-shadow:0 4px 16px rgba(7,193,96,0.4)}
+.send-btn:active{background:var(--primary-darker);transform:scale(0.97)}
+.send-btn:disabled{background:var(--text-disabled);box-shadow:none;cursor:not-allowed}
+.send-btn .spinner-sm{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:none}
+.send-btn.loading .spinner-sm{display:block}
+.send-btn.loading .btn-label{display:none}
+
+/* =================================================================
+   Loading States
+   ================================================================= */
+.loading-spinner{
+  display:none;align-items:center;justify-content:center;padding:20px;
+  flex-direction:column;gap:10px;
+}
+.loading-spinner.show{display:flex}
+.loading-spinner .spinner{
+  width:36px;height:36px;border:3px solid var(--border);
+  border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;
+}
+.loading-spinner .text{font-size:13px;color:var(--text-hint)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.skeleton{background:linear-gradient(90deg,var(--bg) 25%,#e8e8e8 50%,var(--bg) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:var(--radius-sm)}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skeleton-line{height:16px;margin-bottom:8px}
+.skeleton-card{padding:16px;background:var(--card);border-radius:var(--radius);margin-bottom:10px}
+.skeleton-card .skeleton-line:nth-child(1){width:60%}
+.skeleton-card .skeleton-line:nth-child(2){width:40%}
+.skeleton-card .skeleton-line:nth-child(3){width:80%}
+
+/* =================================================================
+   AI Parse Result Card
+   ================================================================= */
+.ai-result{
+  display:none;background:var(--card);border-radius:var(--radius);overflow:hidden;
+  margin-top:10px;box-shadow:var(--shadow-lg);border:2px solid var(--primary);
+  transition:all var(--transition);
+}
+.ai-result.show{display:block;animation:popIn .4s cubic-bezier(0.175,0.885,0.32,1.275)}
+@keyframes popIn{from{opacity:0;transform:scale(0.88) translateY(-8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.ai-result .result-header{
+  background:linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color:#fff;padding:10px 16px;font-size:13px;font-weight:600;
+  display:flex;align-items:center;gap:8px;
+}
+.ai-result .result-header .check-icon{font-size:18px}
+.ai-result .result-body{padding:14px 16px}
+.ai-result .result-row{display:flex;align-items:center;margin-bottom:10px;font-size:14px;flex-wrap:wrap;gap:4px}
+.ai-result .result-row:last-child{margin-bottom:0}
+.ai-result .result-row .label{color:var(--text-hint);width:60px;flex-shrink:0;font-size:12px;font-weight:500}
+.ai-result .result-row .value{font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ai-result .result-row .tag{
+  display:inline-block;padding:2px 10px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:0.3px;
+}
+.tag-supply{background:#fff3e0;color:#e65100}
+.tag-demand{background:#e3f2fd;color:#0d47a1}
+.tag-waste{background:#fce4ec;color:#880e4f}
+.tag-recycled{background:#e8f5e9;color:#1b5e20}
+.ai-result .result-divider{height:1px;background:var(--border-light);margin:8px 0}
+.ai-result .result-actions{display:flex;gap:10px;padding:0 16px 14px}
+.btn-confirm{
+  flex:1;padding:11px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;
+  cursor:pointer;text-align:center;transition:all var(--transition);letter-spacing:0.3px;
+  min-height:44px;
+}
+.btn-confirm.primary{background:var(--primary);color:#fff;box-shadow:0 2px 8px rgba(7,193,96,0.3)}
+.btn-confirm.primary:hover{background:var(--primary-dark)}
+.btn-confirm.primary:active{background:var(--primary-darker);transform:scale(0.97)}
+.btn-confirm.secondary{background:var(--bg);color:var(--text-secondary)}
+.btn-confirm.secondary:active{background:#e0e0e0}
+
+/* =================================================================
+   Stats Row
+   ================================================================= */
+.stats-row{display:flex;gap:10px;margin-bottom:16px}
+.stat-card{
+  flex:1;background:var(--card);border-radius:var(--radius);padding:14px 10px;
+  text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.03);transition:transform var(--transition);
+  cursor:pointer;min-width:0;
+}
+.stat-card:hover{transform:translateY(-2px)}
+.stat-card .num{font-size:24px;font-weight:700;color:var(--primary);font-family:var(--font-mono)}
+.stat-card .label{font-size:11px;color:var(--text-hint);margin-top:3px;letter-spacing:0.5px}
+.stat-card .sub{font-size:10px;color:var(--primary);margin-top:2px;font-weight:500}
+
+/* =================================================================
+   Listing Card
+   ================================================================= */
+.listing-card{
+  background:var(--card);border-radius:var(--radius);padding:14px 16px;
+  margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.03);
+  position:relative;cursor:pointer;transition:all var(--transition);
+  border-left:3px solid transparent;
+}
+.listing-card:hover{border-left-color:var(--primary);box-shadow:0 3px 12px rgba(0,0,0,0.08)}
+.listing-card:active{transform:scale(0.985)}
+.listing-card .card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:8px}
+.listing-card .material-name{font-size:15px;font-weight:700;color:var(--text);line-height:1.3;flex:1}
+.listing-card .badge-row{display:flex;gap:4px;flex-wrap:wrap;flex-shrink:0}
+.listing-card .badge{
+  font-size:10px;padding:3px 8px;border-radius:4px;font-weight:600;letter-spacing:0.3px;white-space:nowrap;
+}
+.badge-supply{background:#fff3e0;color:#e65100}
+.badge-demand{background:#e3f2fd;color:#0d47a1}
+.badge-matched{background:var(--primary-light);color:var(--primary-dark)}
+.badge-online{background:var(--primary-light);color:var(--primary-dark)}
+.listing-card .card-info{font-size:13px;color:var(--text-secondary);line-height:1.9}
+.listing-card .card-info strong{color:var(--text);margin:0 2px;font-weight:600}
+.listing-card .card-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px}
+.listing-card .location-tag{font-size:11px;color:var(--text-hint)}
+.listing-card .card-footer{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:8px;border-top:1px solid var(--border-light);font-size:11px;color:var(--text-hint)}
+.listing-card .score{font-size:13px;font-weight:700;color:var(--primary);background:var(--primary-light);padding:2px 10px;border-radius:12px}
+.listing-card .score.high{color:#e65100;background:#fff3e0}
+
+/* =================================================================
+   Empty States
+   ================================================================= */
+.empty-state{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:40px 20px;text-align:center;color:var(--text-hint);
+}
+.empty-state .icon{font-size:48px;margin-bottom:12px;opacity:0.6}
+.empty-state .title{font-size:15px;font-weight:600;color:var(--text-secondary);margin-bottom:4px}
+.empty-state .text{font-size:13px;color:var(--text-hint);margin-bottom:4px}
+.empty-state .sub{font-size:12px;color:var(--primary);margin-top:8px;cursor:pointer}
+
+/* =================================================================
+   Quick Filters
+   ================================================================= */
+.quick-filters{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.quick-filters .quick-chip{
+  font-size:11px;padding:6px 14px;border-radius:20px;
+  background:var(--card);color:var(--text-secondary);border:1px solid var(--border);
+  cursor:pointer;transition:all var(--transition);white-space:nowrap;
+  min-height:32px;display:flex;align-items:center;
+}
+.quick-filters .quick-chip.active{background:var(--primary);color:#fff;border-color:var(--primary);font-weight:600}
+.quick-filters .quick-chip:active{transform:scale(0.96)}
+
+/* =================================================================
+   Market Table
+   ================================================================= */
+.market-group{margin-bottom:16px}
+.market-group .group-header{
+  display:flex;align-items:center;gap:8px;padding:10px 0;
+  font-size:15px;font-weight:700;cursor:pointer;min-height:44px;
+}
+.market-group .group-header .icon{font-size:20px}
+.market-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 14px;background:var(--card);border-radius:var(--radius-sm);
+  margin-bottom:6px;box-shadow:0 1px 2px rgba(0,0,0,0.02);
+  gap:8px;
+}
+.market-row .material-name{font-size:13px;font-weight:600;flex:1;min-width:0}
+.market-row .price-range{font-size:13px;font-weight:700;font-family:var(--font-mono);white-space:nowrap}
+.market-row .trend{font-size:11px;font-weight:600;white-space:nowrap}
+.trend-up{color:#e65100}
+.trend-down{color:#0d47a1}
+.trend-flat{color:var(--text-hint)}
+
+/* =================================================================
+   Market Overview & Charts
+   ================================================================= */
+.price-overview{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.price-overview .overview-card{flex:1;min-width:80px;background:var(--card);border-radius:var(--radius);padding:12px;text-align:center}
+.price-overview .overview-card .ov-num{font-size:22px;font-weight:800;color:var(--primary);font-family:var(--font-mono)}
+.price-overview .overview-card .ov-label{font-size:10px;color:var(--text-hint);margin-top:4px}
+.price-overview .overview-card.trend-up .ov-num{color:#e65100}
+.price-overview .overview-card.trend-down .ov-num{color:#0d47a1}
+.trend-chart-area{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.trend-chart-area .chart-title{font-size:13px;font-weight:600;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.trend-chart-area .chart-title .chart-tabs{display:flex;gap:4px}
+.trend-chart-area .chart-title .chart-tab{font-size:11px;padding:4px 10px;border-radius:12px;background:var(--bg);color:var(--text-hint);cursor:pointer;border:none}
+.trend-chart-area .chart-title .chart-tab.active{background:var(--primary);color:#fff}
+.trend-chart-area svg{width:100%;height:180px}
+.heatmap-area{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.heatmap-area .hm-title{font-size:13px;font-weight:600;margin-bottom:10px}
+.heatmap-bar{margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.heatmap-bar .hm-label{font-size:11px;width:48px;text-align:right;color:var(--text-secondary)}
+.heatmap-bar .hm-track{flex:1;height:14px;background:var(--bg);border-radius:7px;overflow:hidden}
+.heatmap-bar .hm-fill{height:100%;border-radius:7px;min-width:4px;transition:width 0.6s ease}
+.heatmap-bar .hm-val{font-size:10px;width:36px;color:var(--text-hint);text-align:right}
+
+/* =================================================================
+   Enterprise Profile
+   ================================================================= */
+.ent-card{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.ent-card .ent-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.ent-card .ent-avatar{width:48px;height:48px;border-radius:50%;background:var(--primary-light);display:flex;align-items:center;justify-content:center;font-size:22px}
+.ent-card .ent-name{font-size:16px;font-weight:700}
+.ent-card .ent-role{font-size:11px;color:var(--text-hint)}
+.ent-badges{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.ent-badge{padding:3px 8px;border-radius:10px;font-size:10px;background:var(--primary-light);color:var(--primary)}
+.ent-stats{display:flex;gap:16px;margin-bottom:10px}
+.ent-stat{text-align:center}
+.ent-stat .stat-num{font-size:18px;font-weight:700;color:var(--primary)}
+.ent-stat .stat-label{font-size:10px;color:var(--text-hint)}
+.ent-meta{font-size:11px;color:var(--text-secondary);line-height:1.8}
+.sample-card{background:var(--bg);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px}
+.sample-card .sample-title{font-size:13px;font-weight:600;margin-bottom:4px}
+.sample-card .sample-meta{font-size:11px;color:var(--text-hint)}
+.eval-bar{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.eval-bar .eval-label{font-size:10px;color:var(--text-hint);width:32px}
+.eval-bar .eval-track{flex:1;height:8px;background:var(--card);border-radius:4px;overflow:hidden}
+.eval-bar .eval-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#059652,#ffc300)}
+.eval-bar .eval-score{font-size:11px;font-weight:700;color:var(--primary);width:28px;text-align:right}
+/* Enterprise page */
+.ent-page-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.ent-page-header .ent-back{width:32px;height:32px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;flex-shrink:0}
+.ent-page-header .ent-title{font-size:16px;font-weight:700}
+.ent-section{margin-bottom:16px}
+.ent-section .ent-section-title{font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.sample-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sample-card .sample-imgs{display:flex;gap:4px;margin-top:6px;overflow-x:auto}
+.sample-card .sample-imgs img{width:60px;height:60px;border-radius:6px;object-fit:cover;flex-shrink:0}
+.eval-list-item{background:var(--bg);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px}
+.eval-list-item .eval-reviewer{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px;font-weight:600}
+.eval-list-item .eval-reviewer .r-avatar{width:28px;height:28px;border-radius:50%;background:var(--primary-light);display:flex;align-items:center;justify-content:center;font-size:13px}
+.eval-list-item .eval-stars{display:flex;gap:4px;margin-bottom:6px}
+.eval-list-item .eval-stars span{font-size:10px;color:var(--text-hint)}
+.eval-list-item .eval-comment{font-size:12px;color:var(--text-secondary);line-height:1.6}
+.eval-list-item .eval-time{font-size:10px;color:var(--text-hint);margin-top:6px}
+.cert-tags{display:flex;flex-wrap:wrap;gap:4px}
+.cert-tag{padding:2px 8px;border-radius:8px;background:#e8f5e9;color:#2e7d32;font-size:10px;font-weight:600}
+.ent-contact-bar{display:flex;gap:8px;margin-top:12px}
+.ent-contact-bar .contact-btn{flex:1;padding:8px;border-radius:var(--radius-sm);text-align:center;font-size:12px;font-weight:600;cursor:pointer;border:none}
+.ent-contact-bar .contact-btn.primary{background:var(--primary);color:#fff}
+.ent-contact-bar .contact-btn.outline{background:transparent;border:1px solid var(--primary);color:var(--primary)}
+
+/* =================================================================
+   Deal Pipeline (交易流程追踪)
+   ================================================================= */
+.pipeline{display:flex;justify-content:space-between;align-items:flex-start;padding:20px 8px;position:relative}
+.pipeline::before{content:'';position:absolute;top:28px;left:32px;right:32px;height:2px;background:var(--border)}
+.pipeline .step{display:flex;flex-direction:column;align-items:center;gap:4px;position:relative;z-index:1;width:56px}
+.pipeline .step .dot{width:20px;height:20px;border-radius:50%;background:var(--border);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.12);transition:all .3s}
+.pipeline .step.active .dot{background:var(--primary);box-shadow:0 0 0 4px rgba(37,99,235,.15)}
+.pipeline .step.done .dot{background:var(--success)}
+.pipeline .step.cancelled .dot{background:var(--danger)}
+.pipeline .step .label{font-size:10px;color:var(--text-hint);text-align:center;white-space:nowrap}
+.pipeline .step.active .label{color:var(--primary);font-weight:600}
+.deal-card{background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:10px}
+.deal-card .deal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.deal-card .deal-material{font-weight:600;font-size:15px}
+.deal-card .deal-status{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600}
+.deal-card .deal-status.intent{background:#fef3c7;color:#b45309}
+.deal-card .deal-status.negotiating{background:#dbeafe;color:#1d4ed8}
+.deal-card .deal-status.deal{background:#d1fae5;color:#065f46}
+.deal-card .deal-status.completed{background:#e0e7ff;color:#3730a3}
+.deal-card .deal-status.cancelled{background:#fee2e2;color:#991b1b}
+.deal-card .deal-meta{display:flex;gap:16px;font-size:12px;color:var(--text-hint);margin-top:6px}
+.deal-card .deal-actions{display:flex;gap:8px;margin-top:10px}
+.deal-card .deal-actions button{flex:1;padding:7px 0;border-radius:6px;font-size:12px;font-weight:600;border:none;cursor:pointer}
+.deal-card .deal-actions button.primary{background:var(--primary);color:#fff}
+.deal-card .deal-actions button.outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+.deal-card .deal-actions button.danger{background:transparent;border:1px solid var(--danger);color:var(--danger)}
+.deal-tab-bar{display:flex;gap:0;margin-bottom:14px;border-bottom:2px solid var(--border)}
+.deal-tab-bar .dt{flex:1;text-align:center;padding:10px 0;font-size:13px;color:var(--text-hint);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s}
+.deal-tab-bar .dt.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
+
+/* =================================================================
+   Spread Card & Heatmap (价差+热力图)
+   ================================================================= */
+.spread-card{background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:1px solid #bbf7d0;border-radius:var(--radius);padding:14px;margin-bottom:12px}
+.spread-card .spread-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.spread-card .spread-title{font-weight:700;font-size:14px;color:#065f46}
+.spread-card .spread-value{font-size:28px;font-weight:800;color:var(--success)}
+.spread-card .spread-insight{font-size:12px;color:#047857;margin-top:6px;line-height:1.5}
+.spread-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px}
+.spread-row .label{color:var(--text-hint)}
+.spread-row .val{font-weight:700}
+.heatmap-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:4px;margin-bottom:12px}
+.heatmap-cell{aspect-ratio:1;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;cursor:pointer;transition:transform .15s}
+.heatmap-cell:hover{transform:scale(1.08)}
+.heatmap-cell .rname{font-weight:600;margin-bottom:1px}
+.heatmap-cell .rprice{font-size:11px;font-weight:700}
+
+/* =================================================================
+   Profile Page
+   ================================================================= */
+.profile-section{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.profile-section .section-title{font-size:13px;color:var(--text-hint);margin-bottom:10px;font-weight:600;letter-spacing:0.5px}
+.profile-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;min-height:44px}
+.profile-row .label{font-size:14px;color:var(--text)}
+.profile-row .value{font-size:13px;color:var(--text-hint)}
+.divider{height:1px;background:var(--border-light);margin:0}
+.history-item{
+  background:var(--card);padding:10px 14px;border-radius:var(--radius-sm);
+  margin-bottom:6px;font-size:12px;
+}
+.history-item .raw{color:var(--text-secondary);margin-bottom:4px;word-break:break-all}
+.history-item .parsed{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-weight:600}
+.history-item .parsed .arrow{color:var(--text-hint);margin:0 2px}
+
+/* =================================================================
+   Modal / Registration
+   ================================================================= */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;
+  align-items:flex-end;justify-content:center;
+}
+.modal-overlay.show{display:flex}
+.modal-box{
+  background:#fff;border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+  width:100%;max-width:500px;padding:24px 20px 32px;
+  animation:slideUp .35s cubic-bezier(0.4,0,0.2,1);
+  max-height:90vh;overflow-y:auto;
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-box .m-title{font-size:20px;font-weight:700;margin-bottom:6px;text-align:center}
+.modal-box .m-subtitle{font-size:13px;color:var(--text-hint);margin-bottom:20px;text-align:center}
+.modal-box .form-group{margin-bottom:16px}
+.modal-box .form-group label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--text-secondary)}
+.modal-box .form-group input,
+.modal-box .form-group select{
+  width:100%;padding:12px 14px;font-size:15px;background:var(--bg);
+  border-radius:var(--radius-sm);border:2px solid transparent;
+  transition:border var(--transition);min-height:44px;
+}
+.modal-box .form-group input:focus,
+.modal-box .form-group select:focus{background:#fff;border-color:var(--primary)}
+.modal-box .role-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.modal-box .role-option{
+  padding:12px;border-radius:var(--radius-sm);background:var(--bg);
+  text-align:center;font-size:13px;font-weight:600;cursor:pointer;
+  border:2px solid transparent;transition:all var(--transition);min-height:44px;
+  display:flex;align-items:center;justify-content:center;gap:4px;
+}
+.modal-box .role-option.selected{background:var(--primary-light);border-color:var(--primary);color:var(--primary-dark)}
+.modal-box .role-option:active{transform:scale(0.96)}
+.modal-box .btn-full{
+  width:100%;padding:14px;background:var(--primary);color:#fff;
+  border-radius:var(--radius-sm);font-size:16px;font-weight:700;
+  cursor:pointer;transition:all var(--transition);min-height:48px;
+}
+.modal-box .btn-full:hover{background:var(--primary-dark)}
+.modal-box .btn-full:active{transform:scale(0.97)}
+.modal-box .btn-full:disabled{background:var(--text-disabled);cursor:not-allowed}
+
+/* =================================================================
+   Sheet (Bottom Sheet for Match Detail)
+   ================================================================= */
+.sheet-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:150;
+  align-items:flex-end;justify-content:center;
+}
+.sheet-overlay.show{display:flex}
+.sheet{
+  background:#fff;border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+  width:100%;max-width:500px;max-height:80vh;overflow-y:auto;
+  padding:20px;animation:slideUp .3s cubic-bezier(0.4,0,0.2,1);
+}
+.sheet .handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px}
+.sheet .sheet-title{font-size:17px;font-weight:700;margin-bottom:12px}
+.sheet .sheet-actions{display:flex;gap:10px;margin-top:16px}
+.sheet .sheet-btn{
+  flex:1;padding:12px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;
+  text-align:center;cursor:pointer;transition:all var(--transition);min-height:44px;
+}
+.sheet .sheet-btn.primary{background:var(--primary);color:#fff}
+.sheet .sheet-btn.outline{background:#fff;border:1px solid var(--border);color:var(--text-secondary)}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.info-item{padding:8px 12px;background:var(--bg);border-radius:var(--radius-xs)}
+.info-item .info-label{font-size:10px;color:var(--text-hint);text-transform:uppercase;letter-spacing:0.5px}
+.info-item .info-value{font-size:13px;font-weight:600;color:var(--text)}
+.source-breakdown{margin-top:12px}
+.source-breakdown .breakdown-row{display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px}
+.source-breakdown .breakdown-bar{height:6px;border-radius:3px;background:var(--primary);margin-bottom:8px;transition:width .6s ease}
+.score-bar{display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg);border-radius:var(--radius-sm);margin-bottom:12px}
+.score-bar .score-num{font-size:32px;font-weight:800}
+.score-bar .score-detail{font-size:12px;color:var(--text-hint)}
+
+/* =================================================================
+   Pull-to-Refresh
+   ================================================================= */
+.ptr-indicator{
+  display:none;text-align:center;padding:12px;color:var(--text-hint);
+  font-size:13px;align-items:center;justify-content:center;gap:8px;
+}
+.ptr-indicator.show{display:flex}
+.ptr-indicator .ptr-spinner{
+  width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--primary);
+  border-radius:50%;animation:spin .6s linear infinite;
+}
+
+/* =================================================================
+   Toast
+   ================================================================= */
+.toast-container{
+  position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:300;
+  display:flex;flex-direction:column;gap:8px;pointer-events:none;
+  width:90%;max-width:400px;
+}
+.toast{
+  background:#333;color:#fff;padding:12px 16px;border-radius:var(--radius-sm);
+  font-size:13px;box-shadow:var(--shadow-lg);opacity:0;transform:translateY(-20px);
+  transition:all .3s ease;pointer-events:auto;display:flex;align-items:center;justify-content:space-between;gap:8px;
+}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{background:var(--primary-dark)}
+.toast.error{background:var(--danger)}
+.toast.info{background:var(--info)}
+.toast .toast-retry{
+  font-size:11px;font-weight:700;color:#fff;cursor:pointer;background:rgba(255,255,255,0.2);
+  padding:4px 10px;border-radius:12px;white-space:nowrap;
+}
+
+/* =================================================================
+   Responsive Grid: On larger screens, use 2-column layout for listings
+   ================================================================= */
+@media(min-width:640px){
+  .listing-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .listing-grid .listing-card{margin-bottom:0}
+  .page{padding:20px}
+}
+
+/* =================================================================
+   Network status bar
+   ================================================================= */
+.network-bar{
+  display:none;background:var(--warning-light);color:#8d6e00;padding:6px 16px;
+  font-size:12px;text-align:center;align-items:center;justify-content:center;gap:8px;
+}
+.network-bar.show{display:flex}
+.network-bar .retry-link{color:var(--primary);font-weight:600;cursor:pointer;text-decoration:underline}
+
+/* =================================================================
+   Accessibility helpers
+   ================================================================= */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+h1,h2,h3{font-weight:inherit}
+
+/* =================================================================
+   Chat (Messages) Styles
+   ================================================================= */
+/* Conversation list */
+.conv-list{padding:0 16px}
+.conv-item{
+  display:flex;align-items:center;gap:12px;padding:14px 0;
+  border-bottom:1px solid var(--border-light);cursor:pointer;
+  transition:background var(--transition);
+}
+.conv-item:active{background:var(--primary-light)}
+.conv-avatar{
+  width:48px;height:48px;border-radius:50%;background:var(--primary-light);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;flex-shrink:0;
+}
+.conv-body{flex:1;min-width:0}
+.conv-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.conv-name{font-size:15px;font-weight:600;color:var(--text)}
+.conv-time{font-size:11px;color:var(--text-hint);flex-shrink:0}
+.conv-last{font-size:13px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conv-badge{
+  width:20px;height:20px;border-radius:50%;background:var(--danger);
+  color:#fff;font-size:11px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.conv-badge:empty{display:none}
+
+/* Chat window */
+.chat-header{
+  display:flex;align-items:center;gap:10px;padding:12px 16px;
+  background:var(--card);border-bottom:1px solid var(--border-light);
+  position:sticky;top:0;z-index:50;
+}
+.chat-back-btn{
+  font-size:20px;cursor:pointer;padding:4px;color:var(--text-secondary);
+  flex-shrink:0;
+}
+.chat-header-name{font-size:16px;font-weight:600;flex:1}
+.chat-header-role{font-size:12px;color:var(--text-hint)}
+
+.chat-messages{
+  flex:1;overflow-y:auto;padding:12px 16px;
+  display:flex;flex-direction:column;gap:10px;
+  -webkit-overflow-scrolling:touch;
+}
+.msg-row{display:flex;max-width:85%}
+.msg-row.me{align-self:flex-end;flex-direction:row-reverse}
+.msg-row.other{align-self:flex-start}
+.msg-bubble{
+  padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.5;
+  word-break:break-word;position:relative;
+}
+.msg-row.me .msg-bubble{
+  background:var(--primary);color:#fff;
+  border-bottom-right-radius:4px;
+}
+.msg-row.other .msg-bubble{
+  background:var(--card);color:var(--text);
+  border-bottom-left-radius:4px;
+  box-shadow:0 1px 3px rgba(0,0,0,0.06);
+}
+.msg-time{font-size:10px;color:var(--text-hint);margin-top:4px;text-align:center}
+
+.chat-input-bar{
+  display:flex;gap:8px;padding:10px 16px;
+  padding-bottom:calc(10px + var(--safe-bottom));
+  background:var(--card);border-top:1px solid var(--border-light);
+  position:sticky;bottom:0;z-index:50;
+}
+.chat-input{
+  flex:1;padding:10px 14px;border-radius:20px;border:1px solid var(--border);
+  background:var(--bg);font-size:14px;outline:none;resize:none;
+}
+.chat-input:focus{border-color:var(--primary)}
+.chat-send-btn{
+  width:40px;height:40px;border-radius:50%;background:var(--primary);
+  color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:opacity var(--transition);
+}
+.chat-send-btn:disabled{opacity:0.5;cursor:not-allowed}
+.chat-empty{
+  text-align:center;color:var(--text-hint);padding:60px 20px;
+  font-size:14px;
+}
+.chat-empty .icon{font-size:48px;margin-bottom:12px;opacity:0.6}
+
+/* =================================================================
+   Vision Page (P0-1: 拍照识别)
+   ================================================================= */
+.vision-upload-area{
+  background:var(--card);border-radius:var(--radius);padding:20px;
+  text-align:center;border:2px dashed var(--border);
+  margin-bottom:16px;cursor:pointer;transition:all var(--transition);
+  min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+}
+.vision-upload-area:hover{border-color:var(--primary);background:var(--primary-light)}
+.vision-upload-area .icon{font-size:48px;opacity:0.7}
+.vision-upload-area .text{font-size:14px;color:var(--text-secondary)}
+.vision-upload-area .hint{font-size:11px;color:var(--text-hint)}
+.vision-preview{position:relative;margin-bottom:16px;border-radius:var(--radius);overflow:hidden}
+.vision-preview img{width:100%;max-height:300px;object-fit:contain;background:#000}
+.vision-preview .retake{
+  position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.6);color:#fff;
+  border-radius:20px;padding:6px 14px;font-size:12px;cursor:pointer;
+}
+.vision-result-card{
+  background:var(--card);border-radius:var(--radius);overflow:hidden;
+  box-shadow:var(--shadow-lg);border:2px solid var(--primary);
+  margin-bottom:16px;display:none;
+}
+.vision-result-card.show{display:block;animation:popIn .4s cubic-bezier(0.175,0.885,0.32,1.275)}
+.vision-result-card .result-header{
+  background:linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color:#fff;padding:10px 16px;font-size:13px;font-weight:600;
+  display:flex;align-items:center;gap:8px;
+}
+.vision-result-card .result-body{padding:14px 16px}
+.vision-result-card .result-row{display:flex;align-items:center;margin-bottom:10px;font-size:14px;flex-wrap:wrap;gap:4px}
+.vision-result-card .result-row:last-child{margin-bottom:0}
+.vision-result-card .result-row .label{color:var(--text-hint);width:65px;flex-shrink:0;font-size:12px;font-weight:500}
+.vision-result-card .result-row .value{font-weight:600;color:var(--text)}
+.vision-result-card .result-row .conf{font-size:11px;color:var(--text-hint);margin-left:6px}
+.vision-result-card .result-actions{display:flex;gap:10px;padding:0 16px 14px}
+.vision-loading{
+  display:none;align-items:center;justify-content:center;
+  padding:24px;flex-direction:column;gap:10px;
+}
+.vision-loading.show{display:flex}
+.vision-loading .spinner{
+  width:40px;height:40px;border:4px solid var(--border);
+  border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;
+}
+.vision-loading .text{font-size:14px;color:var(--text-hint)}
+
+/* =================================================================
+   Pricing Check Card (P0-4: AI定价检测)
+   ================================================================= */
+.pricing-check-card{
+  background:var(--card);border-radius:var(--radius-sm);padding:12px 14px;
+  margin:10px 0;border-left:3px solid var(--info);
+  font-size:13px;display:none;
+}
+.pricing-check-card.show{display:block;animation:fadeSlideIn .3s ease}
+.pricing-check-card .price-row{display:flex;justify-content:space-between;padding:4px 0}
+.pricing-check-card .price-row .label{color:var(--text-hint);font-size:12px}
+.pricing-check-card .price-row .value{font-weight:700;font-family:var(--font-mono)}
+.pricing-check-card .price-warn{
+  margin-top:8px;padding:8px 10px;border-radius:4px;
+  font-size:12px;font-weight:600;
+}
+.pricing-check-card .price-warn.overpriced{background:#fff0f0;color:var(--danger)}
+.pricing-check-card .price-warn.underpriced{background:#fff9e6;color:#e65100}
+.pricing-check-card .price-warn.reasonable{background:var(--primary-light);color:var(--primary-dark)}
+
+/* =================================================================
+   External Listings (P0-2: 全网货源)
+   ================================================================= */
+.external-source-badge{
+  display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;
+}
+.ext-source-91{background:#e3f2fd;color:#0d47a1}
+.ext-source-bianbao{background:#fff3e0;color:#e65100}
+.ext-source-zaisubao{background:var(--primary-light);color:var(--primary-dark)}
+.ext-listing-card{
+  background:var(--card);border-radius:var(--radius);padding:12px 14px;
+  margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.03);
+  border-left:3px solid var(--info-light);
+}
+.ext-listing-card .ext-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.ext-listing-card .ext-material{font-size:14px;font-weight:700;flex:1}
+.ext-listing-card .ext-info{font-size:12px;color:var(--text-secondary);line-height:1.8}
+.ext-listing-card .ext-footer{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:6px;border-top:1px solid var(--border-light);font-size:11px;color:var(--text-hint)}
+
+/* =================================================================
+   Quality Breakdown in Match Detail (P0-3: 6维品质)
+   ================================================================= */
+.quality-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.quality-item{
+  padding:6px 10px;background:var(--bg);border-radius:var(--radius-xs);
+  font-size:11px;
+}
+.quality-item .q-label{color:var(--text-hint);font-size:10px}
+.quality-item .q-value{font-weight:700;font-size:13px;color:var(--text)}
+.quality-item .q-value.high{color:#e65100}
+.quality-item .q-value.mid{color:var(--primary)}
+.quality-item .q-value.low{color:var(--text-hint)}
+.dim-bars{margin-top:8px}
+.dim-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.dim-bar-label{font-size:11px;color:var(--text-hint);width:50px;text-align:right;flex-shrink:0}
+.dim-bar-track{flex:1;height:8px;background:var(--bg);border-radius:4px;overflow:hidden}
+.dim-bar-fill{height:100%;border-radius:4px;transition:width .6s ease}
+.dim-bar-score{font-size:11px;font-weight:700;width:36px;text-align:right;flex-shrink:0;font-family:var(--font-mono)}
+
+/* =================================================================
+   Loading States
+   ================================================================= */
+.loading-spinner{
+  display:none;align-items:center;justify-content:center;padding:20px;
+  flex-direction:column;gap:10px;
+}
+.loading-spinner.show{display:flex}
+.loading-spinner .spinner{
+  width:36px;height:36px;border:3px solid var(--border);
+  border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;
+}
+.loading-spinner .text{font-size:13px;color:var(--text-hint)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.skeleton{background:linear-gradient(90deg,var(--bg) 25%,#e8e8e8 50%,var(--bg) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:var(--radius-sm)}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skeleton-line{height:16px;margin-bottom:8px}
+.skeleton-card{padding:16px;background:var(--card);border-radius:var(--radius);margin-bottom:10px}
+.skeleton-card .skeleton-line:nth-child(1){width:60%}
+.skeleton-card .skeleton-line:nth-child(2){width:40%}
+.skeleton-card .skeleton-line:nth-child(3){width:80%}
+
+</style>
+</head>
+<body>
+<h1 class="sr-only">再塑通 AI废塑再塑自动撮合</h1>
+
+<!-- ================================================================
+     APP CONTAINER — FULL VIEWPORT
+     ================================================================ -->
+<div class="app-container" id="appContainer">
+
+  <!-- Network Status Bar -->
+  <div class="network-bar" id="networkBar">
+    <span>⚠️ 网络连接异常</span>
+    <span class="retry-link" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="retryFailedRequest()">重试</span>
+  </div>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="logo"><span class="dot"></span>再塑通 AI</div>
+    <div class="badge" id="roleBadge" onclick="showProfile()">
+      <span class="status-dot"></span><span id="roleLabel">未登录</span>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       PAGE 1: HOME (首页)
+       ================================================================ -->
+  <div class="page active" id="page-home" role="main">
+
+    <!-- AI Input Card -->
+    <div class="ai-input-card">
+      <textarea id="aiInput" rows="3" placeholder="直接描述您的供求信息…
+AI 将自动识别品类、数量、价格、地点
+
+例如：我有30吨PET三色瓶砖在定州5800出
+或：急需50吨PP注塑级再生颗粒月供" aria-label="输入供求信息"></textarea>
+      <div class="input-footer">
+        <div class="quick-chips">
+          <span class="quick-chip" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="quickAction('sell_waste')">📤 卖废塑料</span>
+          <span class="quick-chip" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="quickAction('sell_recycled')">📤 卖再生料</span>
+          <span class="quick-chip" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="quickAction('buy_waste')">📥 买废塑料</span>
+          <span class="quick-chip" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="quickAction('buy_recycled')">📥 买再生料</span>
+        </div>
+        <button class="send-btn" id="sendBtn" onclick="submitAIInput()" aria-label="发送">
+          <span class="spinner-sm"></span>
+          <span class="btn-label">发送</span>
+        </button>
+                <button class="camera-btn" onclick="switchTab('vision')" title="拍照识别" aria-label="拍照识别">📷</button>
+      </div>
+    </div>
+
+    <!-- AI Loading -->
+    <div class="loading-spinner" id="aiLoading">
+      <div class="spinner"></div>
+      <div class="text">AI 正在解析您的供求信息…</div>
+    </div>
+
+    <!-- AI Result -->
+    <div class="ai-result" id="aiResult"></div>
+
+    <!-- Stats Row -->
+    <div class="stats-row" id="statsRow">
+      <div class="stat-card" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="switchTab('match')">
+        <div class="num" id="statSupplies">--</div>
+        <div class="label">供应信息</div>
+      </div>
+      <div class="stat-card" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="switchTab('match')">
+        <div class="num" id="statDemands">--</div>
+        <div class="label">求购信息</div>
+      </div>
+      <div class="stat-card" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="switchTab('match')">
+        <div class="num" id="statMatches">--</div>
+        <div class="label">智能匹配</div>
+        <div class="sub" id="statMatchesSub"></div>
+      </div>
+    </div>
+
+    <!-- Home Listings Loading -->
+    <div class="loading-spinner" id="homeLoading">
+      <div class="spinner"></div>
+      <div class="text">加载最新供求…</div>
+    </div>
+
+    <!-- Home Listings Section -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <span style="font-size:14px;font-weight:600">📋 最新供求</span>
+      <span style="font-size:11px;color:var(--text-hint)" id="homeListingsCount">0条</span>
+    </div>
+    <div class="listing-grid" id="homeListings"></div>
+    <div class="empty-state" id="homeEmpty">
+      <div class="icon">💬</div>
+      <div class="title">还没有人发布过供求</div>
+      <div class="text">说句话成为第一个</div>
+      <div class="sub" onclick="document.getElementById('aiInput').focus()">✍️ 发布一条供求 →</div>
+    </div>
+
+    <!-- Price Snapshot -->
+    <div style="margin-top:12px">
+      <div style="font-size:12px;color:var(--text-hint);margin-bottom:8px">📊 行情快照</div>
+      <div id="priceSnapshot" style="font-size:11px;display:flex;flex-wrap:wrap;gap:6px"></div>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       PAGE 2: MATCH (匹配)
+       ================================================================ -->
+  <div class="page" id="page-match">
+    <!-- Pull to refresh indicator -->
+    <div class="ptr-indicator" id="matchPtrIndicator">
+      <div class="ptr-spinner"></div>
+      <span>刷新匹配中…</span>
+    </div>
+
+    <!-- Match Loading -->
+    <div class="loading-spinner" id="matchLoading">
+      <div class="spinner"></div>
+      <div class="text">加载匹配数据…</div>
+    </div>
+
+    <div class="quick-filters" id="matchFilters">
+      <span class="quick-chip active" role="button" tabindex="0" aria-pressed="true" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="filterMatches('all',this)">全部</span>
+      <span class="quick-chip" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="filterMatches('high',this)">高匹配 ≥80%</span>
+      <span class="quick-chip" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="filterMatches('supply',this)">只看供应</span>
+      <span class="quick-chip" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="filterMatches('demand',this)">只看求购</span>
+    </div>
+    <div style="font-size:12px;color:var(--text-hint);margin-bottom:8px" id="matchHint">暂无匹配数据</div>
+    <div class="listing-grid" id="matchList"></div>
+    <div class="empty-state" id="matchEmpty">
+      <div class="icon">🎯</div>
+      <div class="title">暂无匹配结果</div>
+      <div class="text">发布供求信息后，AI将自动匹配</div>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       PAGE 3: MARKET (行情)
+       ================================================================ -->
+  <div class="page" id="page-market">
+    <div class="loading-spinner" id="marketLoading">
+      <div class="spinner"></div>
+      <div class="text">加载行情数据…</div>
+    </div>
+
+    <div class="quick-filters" style="margin-bottom:12px">
+      <span class="quick-chip active" role="button" tabindex="0" onclick="switchMarketTab('waste',this)">废塑料行情</span>
+      <span class="quick-chip" role="button" tabindex="0" onclick="switchMarketTab('recycled',this)">再生料行情</span>
+      <span class="quick-chip" role="button" tabindex="0" onclick="switchMarketTab('external',this)" style="background:var(--info-light);color:var(--info)">🌐 全网货源</span>
+    </div>
+
+    <!-- Price overview cards -->
+    <div class="price-overview" id="priceOverview" style="display:none"></div>
+
+    <!-- Spread Card: 新料-再生料价差 -->
+    <div class="spread-card" id="spreadCard" style="display:none">
+      <div class="spread-header">
+        <span class="spread-title">♻️ 新料-再生料价差</span>
+        <select id="spreadCatSelect" onchange="loadSpreadCard()" style="font-size:11px;border:1px solid var(--border);border-radius:4px;padding:2px 6px">
+          <option>PET</option><option>HDPE</option><option>PP</option><option>LDPE</option><option>ABS</option><option>PC</option>
+        </select>
+      </div>
+      <div id="spreadContent"></div>
+    </div>
+
+    <!-- Regional heatmap -->
+    <div class="heatmap-area" id="regionalHeatmap" style="display:none">
+      <div class="hm-title">🗺️ 区域价格热力图 <span style="font-size:10px;color:var(--text-hint);font-weight:400;margin-left:4px">再生料 ¥/吨</span></div>
+      <div id="regionalHeatmapContent"></div>
+    </div>
+
+    <!-- Price trend chart -->
+    <div class="trend-chart-area" id="trendChartArea" style="display:none">
+      <div class="chart-title">
+        <span>📈 价格走势</span>
+        <div class="chart-tabs">
+          <button class="chart-tab active" onclick="switchChartRange(7,this)">7天</button>
+          <button class="chart-tab" onclick="switchChartRange(14,this)">14天</button>
+          <button class="chart-tab" onclick="switchChartRange(30,this)">30天</button>
+        </div>
+      </div>
+      <div id="trendChart"></div>
+    </div>
+
+    <!-- Category heatmap -->
+    <div class="heatmap-area" id="heatmapArea" style="display:none">
+      <div class="hm-title">🔥 品类热度排行</div>
+      <div id="heatmapContent"></div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-size:12px;color:var(--text-hint)" id="marketUpdateTime"></span>
+      <span style="font-size:11px;color:var(--text-hint)" id="marketSource"></span>
+    </div>
+    <div id="marketContent"></div>
+
+    <div id="externalContent" style="display:none">
+      <div class="quick-filters" style="margin-bottom:10px">
+        <span class="quick-chip active" onclick="filterExternalSource('all',this)">全部来源</span>
+        <span class="quick-chip" onclick="filterExternalSource('91再生',this)">91再生</span>
+        <span class="quick-chip" onclick="filterExternalSource('变宝网',this)">变宝网</span>
+        <span class="quick-chip" onclick="filterExternalSource('再塑宝',this)">再塑宝</span>
+      </div>
+      <div style="font-size:12px;color:var(--text-hint);margin-bottom:8px" id="extStatus">加载中…</div>
+      <div id="extListings"></div>
+      <div class="empty-state" id="extEmpty" style="display:none">
+        <div class="icon">🌐</div>
+        <div class="title">暂无全网货源数据</div>
+        <div class="text">采集器正在后台运行，请稍后再试</div>
+      </div>
+    </div>
+
+    <div class="empty-state" id="marketEmpty" style="display:none">
+      <div class="icon">📊</div>
+      <div class="title">行情数据加载中…</div>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       PAGE 4: PROFILE (我的)
+       ================================================================ -->
+  <div class="page" id="page-me">
+    <div class="loading-spinner" id="profileLoading">
+      <div class="spinner"></div>
+      <div class="text">加载中…</div>
+    </div>
+
+    <!-- User Info -->
+    <div class="profile-section" id="profileUserSection">
+      <h2 class="section-title">👤 用户信息</h2>
+      <div class="profile-row">
+        <span class="label">昵称</span>
+        <span class="value" id="profileName">--</span>
+      </div>
+      <div class="divider"></div>
+      <div class="profile-row">
+        <span class="label">身份</span>
+        <span class="value" id="profileRole">--</span>
+      </div>
+      <div class="divider"></div>
+      <div class="profile-row">
+        <span class="label">地区</span>
+        <span class="value" id="profileLocation">--</span>
+      </div>
+      <div class="divider"></div>
+      <div class="profile-row" role="button" tabindex="0" style="cursor:pointer" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="switchRole()">
+        <span class="label">切换身份</span>
+        <span class="value" style="color:var(--primary)">🔄 切换 ›</span>
+      </div>
+      <div class="divider"></div>
+      <div class="profile-row" id="profileLogout" role="button" tabindex="0" style="cursor:pointer;display:none" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="logout()">
+        <span class="label" style="color:var(--danger)">退出登录</span>
+        <span class="value" style="color:var(--danger)">🚪 退出 ›</span>
+      </div>
+    </div>
+
+    <!-- My Listings -->
+    <div class="profile-section">
+      <h2 class="section-title">📋 我的发布</h2>
+      <div class="listing-grid" id="myListings"></div>
+      <div class="empty-state" id="myListingsEmpty">
+        <div class="icon">📝</div>
+        <div class="title">还没有发布过供求</div>
+        <div class="sub" onclick="switchTab('home')">去首页发布 →</div>
+      </div>
+    </div>
+
+    <!-- Parse History -->
+    <div class="profile-section">
+      <h2 class="section-title">🕐 AI 解析记录</h2>
+      <div id="parseHistory"></div>
+      <div class="empty-state" id="parseHistoryEmpty">
+        <div class="icon">🤖</div>
+        <div class="title">暂无解析记录</div>
+        <div class="text">在首页输入供求信息即可</div>
+      </div>
+    </div>
+
+    <!-- My Enterprise Card -->
+    <div class="profile-section" id="profileEntSection" style="display:none">
+      <h2 class="section-title">🏢 企业名片</h2>
+      <div class="profile-row" role="button" tabindex="0" style="cursor:pointer" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="showEnterprise(state.user.id)">
+        <span class="label">查看我的企业名片</span>
+        <span class="value" style="color:var(--primary)">👁️ 查看 ›</span>
+      </div>
+    </div>
+
+    <!-- Version -->
+    <div class="profile-section" style="text-align:center;font-size:11px;color:var(--text-hint)">
+      再塑通 AI v5.0 · API-native · <span id="appVersion">2026</span>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       PAGE 5: MESSAGES (消息 — 会话列表)
+       ================================================================ -->
+  <div class="page" id="page-messages">
+    <div class="loading-spinner" id="convLoading">
+      <div class="spinner"></div>
+      <div class="text">加载会话中…</div>
+    </div>
+    <div class="conv-list" id="convList"></div>
+    <div class="chat-empty" id="convEmpty" style="display:none">
+      <div class="icon">💬</div>
+      <div>暂无消息</div>
+      <div style="font-size:12px;margin-top:8px;color:var(--text-hint)">在匹配页联系对方开始沟通</div>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       PAGE 6: CHAT (聊天窗口)
+       ================================================================ -->
+  <div class="page" id="page-chat" style="display:flex;flex-direction:column;min-height:100vh">
+    <div class="chat-header">
+      <span class="chat-back-btn" onclick="switchTab('messages')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();switchTab('messages')}">←</span>
+      <span class="chat-header-name" id="chatPeerName">--</span>
+      <span class="chat-header-role" id="chatPeerRole"></span>
+    </div>
+    <div class="chat-messages" id="chatMessages">
+      <div class="chat-empty" id="chatEmpty">
+        <div class="icon">💬</div>
+        <div>发送第一条消息，开始沟通</div>
+      </div>
+    </div>
+    <div class="chat-input-bar">
+      <input type="text" class="chat-input" id="chatInput" placeholder="输入消息…" maxlength="500" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage()}">
+      <button class="chat-send-btn" id="chatSendBtn" onclick="sendChatMessage()">➤</button>
+    </div>
+  </div>
+
+
+  <!-- ================================================================
+       PAGE 7: VISION (拍照识别 - P0-1)
+       ================================================================ -->
+  <div class="page" id="page-vision">
+    <div style="font-size:15px;font-weight:700;margin-bottom:12px">📷 拍照识别废塑料</div>
+
+    <!-- Upload area (shown when no image selected) -->
+    <div class="vision-upload-area" id="visionUploadArea" onclick="document.getElementById('visionFileInput').click()">
+      <div class="icon">📸</div>
+      <div class="text">点击拍照或上传图片</div>
+      <div class="hint">支持 JPG/PNG，AI 自动识别品类、颜色、纯度</div>
+    </div>
+    <input type="file" id="visionFileInput" accept="image/*" capture="environment" style="display:none" onchange="handleVisionImage(event)">
+
+    <!-- Image preview (shown after selection) -->
+    <div class="vision-preview" id="visionPreview" style="display:none">
+      <img id="visionPreviewImg" src="" alt="预览">
+      <button class="retake" onclick="resetVision()">✕ 重新拍摄</button>
+    </div>
+
+    <!-- Analyze button -->
+    <button class="send-btn" id="visionAnalyzeBtn" style="width:100%;justify-content:center;margin-bottom:16px;display:none" onclick="analyzeVisionImage()">
+      <span class="btn-label">🔍 AI 识别</span>
+    </button>
+
+    <!-- Loading -->
+    <div class="vision-loading" id="visionLoading">
+      <div class="spinner"></div>
+      <div class="text">AI 正在分析图片中的废塑料…</div>
+    </div>
+
+    <!-- Result Card -->
+    <div class="vision-result-card" id="visionResult">
+      <div class="result-header"><span>✅</span> AI 识别结果</div>
+      <div class="result-body" id="visionResultBody"></div>
+      <div class="result-actions">
+        <button class="btn-confirm secondary" onclick="resetVision()">重新识别</button>
+        <button class="btn-confirm primary" id="visionPublishBtn" onclick="fillFormFromVision()">✅ 一键发布</button>
+      </div>
+    </div>
+
+    <!-- Recognition history -->
+    <div style="margin-top:20px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text-hint)">📋 识别记录</div>
+      <div id="visionHistory"></div>
+      <div class="empty-state" id="visionHistoryEmpty">
+        <div class="icon">📷</div>
+        <div class="title">暂无识别记录</div>
+        <div class="text">拍照后记录将保存在这里</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       PAGE 8: ENTERPRISE (企业名片)
+       ================================================================ -->
+  <div class="page" id="page-enterprise">
+    <div class="ent-page-header">
+      <div class="ent-back" onclick="switchTab(state._entReturnTab||'home')">←</div>
+      <div class="ent-title">🏢 企业名片</div>
+    </div>
+
+    <div id="entLoading" class="loading-spinner">
+      <div class="spinner"></div>
+      <div class="text">加载企业信息…</div>
+    </div>
+
+    <!-- Profile Card -->
+    <div class="ent-card" id="entProfileCard" style="display:none">
+      <div class="ent-header">
+        <div class="ent-avatar" id="entAvatar">🏭</div>
+        <div>
+          <div class="ent-name" id="entName">--</div>
+          <div class="ent-role" id="entRole">--</div>
+        </div>
+      </div>
+      <div class="ent-badges" id="entBadges"></div>
+      <div class="ent-stats" id="entStats"></div>
+      <div class="ent-meta" id="entMeta"></div>
+      <div class="cert-tags" id="entCerts"></div>
+      <div class="ent-contact-bar">
+        <button class="contact-btn outline" onclick="startChatFromEnt()">💬 联系TA</button>
+        <button class="contact-btn primary" id="entEditBtn" style="display:none" onclick="editEnterpriseProfile()">✏️ 编辑档案</button>
+      </div>
+    </div>
+
+    <!-- Evaluation Summary -->
+    <div class="ent-section" id="entEvalSection" style="display:none">
+      <div class="ent-section-title">⭐ 交易评价</div>
+      <div id="entEvalSummary"></div>
+    </div>
+
+    <!-- Sample Wall -->
+    <div class="ent-section" id="entSampleSection" style="display:none">
+      <div class="ent-section-title">🧪 产品样本</div>
+      <div class="sample-grid" id="entSampleGrid"></div>
+    </div>
+
+    <!-- Evaluation List -->
+    <div class="ent-section" id="entEvalListSection" style="display:none">
+      <div class="ent-section-title">📝 评价详情</div>
+      <div id="entEvalList"></div>
+      <div class="empty-state" id="entEvalEmpty">
+        <div class="icon">📝</div>
+        <div class="title">暂无评价</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       PAGE 9: DEALS (交易追踪)
+       ================================================================ -->
+  <div class="page" id="page-deals">
+    <div class="ent-page-header">
+      <div class="ent-title">🤝 交易追踪</div>
+    </div>
+
+    <div id="dealsLoading" class="loading-spinner"><div class="spinner"></div></div>
+
+    <!-- Pipeline -->
+    <div class="pipeline" id="dealPipeline">
+      <div class="step" data-status="intent"><div class="dot"></div><div class="label">意向</div></div>
+      <div class="step" data-status="negotiating"><div class="dot"></div><div class="label">洽谈</div></div>
+      <div class="step" data-status="deal"><div class="dot"></div><div class="label">成交</div></div>
+      <div class="step" data-status="completed"><div class="dot"></div><div class="label">完成</div></div>
+    </div>
+
+    <!-- Tab filter -->
+    <div class="deal-tab-bar" id="dealTabBar">
+      <div class="dt active" data-status="" onclick="filterDealStatus('')">全部</div>
+      <div class="dt" data-status="intent" onclick="filterDealStatus('intent')">意向</div>
+      <div class="dt" data-status="negotiating" onclick="filterDealStatus('negotiating')">洽谈</div>
+      <div class="dt" data-status="deal" onclick="filterDealStatus('deal')">成交</div>
+    </div>
+
+    <div id="dealList"></div>
+    <div id="dealEmpty" style="text-align:center;padding:40px 20px;color:var(--text-hint);display:none">
+      <div style="font-size:40px;margin-bottom:8px">📋</div>
+      <div>暂无交易记录</div>
+      <div style="font-size:12px;margin-top:4px">匹配后可从匹配详情发起交易意向</div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav" role="tablist">
+    <div class="tab active" data-page="home" onclick="switchTab('home')" role="tab" tabindex="0" aria-selected="true" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();switchTab('home')}">
+      <span class="icon">🏠</span>首页
+    </div>
+    <div class="tab" data-page="match" onclick="switchTab('match')" role="tab" tabindex="0" aria-selected="false" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();switchTab('match')}">
+      <span class="icon">🎯</span>匹配
+      <span class="badge-dot" id="matchBadge"></span>
+    </div>
+    <div class="tab" data-page="market" onclick="switchTab('market')" role="tab" tabindex="0" aria-selected="false" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();switchTab('market')}">
+      <span class="icon">📊</span>行情
+    </div>
+    <div class="tab" data-page="me" onclick="switchTab('me')" role="tab" tabindex="0" aria-selected="false" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();switchTab('me')}">
+      <span class="icon">👤</span>我的
+    </div>
+    <div class="tab" data-page="deals" onclick="switchTab('deals')" role="tab" tabindex="0" aria-selected="false" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();switchTab('deals')}">
+      <span class="icon">🤝</span>交易
+      <span class="badge-dot" id="dealBadge"></span>
+    </div>
+    <div class="tab" data-page="messages" onclick="switchTab('messages')" role="tab" tabindex="0" aria-selected="false" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();switchTab('messages')}">
+      <span class="icon">💬</span>消息
+      <span class="badge-dot" id="msgBadge"></span>
+    </div>
+    <div class="tab" data-page="vision" onclick="switchTab('vision')" role="tab" tabindex="0" aria-selected="false" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();switchTab('vision')}">
+      <span class="icon">📷</span>拍照
+    </div>
+
+  </nav>
+</div>
+
+<!-- ================================================================
+     REGISTRATION MODAL (First Visit)
+     ================================================================ -->
+<div class="modal-overlay" id="regModal">
+  <div class="modal-box">
+    <!-- Tab switcher -->
+    <div style="display:flex;gap:0;margin-bottom:20px;background:var(--bg);border-radius:8px;padding:4px">
+      <button class="auth-tab active" id="authTabLogin" onclick="switchAuthTab('login')" style="flex:1;padding:10px;border-radius:6px;font-size:14px;font-weight:600;text-align:center;cursor:pointer;background:var(--card);color:var(--text);transition:all .2s;min-height:40px">登录</button>
+      <button class="auth-tab" id="authTabRegister" onclick="switchAuthTab('register')" style="flex:1;padding:10px;border-radius:6px;font-size:14px;font-weight:600;text-align:center;cursor:pointer;background:transparent;color:var(--text-hint);transition:all .2s;min-height:40px">注册</button>
+    </div>
+
+    <!-- Login form -->
+    <div id="authLoginForm">
+      <div class="form-group">
+        <label for="loginName">用户名</label>
+        <input type="text" id="loginName" placeholder="用户名或手机号" maxlength="20" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label for="loginPassword">密码</label>
+        <input type="password" id="loginPassword" placeholder="请输入密码" maxlength="64">
+      </div>
+      <button class="btn-full" id="loginSubmitBtn" onclick="submitLogin()">登录</button>
+      <div id="loginError" style="color:var(--danger);font-size:13px;margin-top:8px;display:none;text-align:center"></div>
+    </div>
+
+    <!-- Register form (hidden by default) -->
+    <div id="authRegisterForm" style="display:none">
+      <div class="form-group">
+        <label for="regName">用户名 <span style="color:var(--danger)">*</span></label>
+        <input type="text" id="regName" placeholder="请输入用户名（如：顺德老王）" maxlength="20" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label for="regPhone">手机号 <span style="color:var(--danger)">*</span></label>
+        <input type="tel" id="regPhone" placeholder="请输入11位手机号" maxlength="11" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label for="regPassword">设置密码 <span style="color:var(--danger)">*</span></label>
+        <input type="password" id="regPassword" placeholder="至少6位密码" maxlength="64">
+      </div>
+      <div class="form-group">
+        <label>选择身份 <span style="color:var(--danger)">*</span></label>
+        <div class="role-options" id="regRoles">
+          <div class="role-option selected" role="button" tabindex="0" data-role="打包站" onclick="selectRegRole(this)">🏭 打包站</div>
+          <div class="role-option" role="button" tabindex="0" data-role="再生工厂" onclick="selectRegRole(this)">🏗️ 再生工厂</div>
+          <div class="role-option" role="button" tabindex="0" data-role="制品·改性·色母" onclick="selectRegRole(this)">🔧 制品·改性·色母</div>
+          <div class="role-option" role="button" tabindex="0" data-role="贸易商" onclick="selectRegRole(this)">🤝 贸易商</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="regLocation">所在地区（选填）</label>
+        <input type="text" id="regLocation" placeholder="如：广东佛山" maxlength="20" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label for="regCompany">企业名称（选填）</label>
+        <input type="text" id="regCompany" placeholder="如：佛山市XX塑料回收有限公司" maxlength="50" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label for="regEmail">邮箱（选填）</label>
+        <input type="email" id="regEmail" placeholder="如：contact@example.com" maxlength="60" autocomplete="off">
+      </div>
+      <button class="btn-full" id="regSubmitBtn" onclick="submitRegistration()">注册并开始使用</button>
+      <div id="regError" style="color:var(--danger);font-size:13px;margin-top:8px;display:none;text-align:center"></div>
+    </div>
+    <div style="text-align:center;margin-top:12px;font-size:11px;color:var(--text-hint)">
+      您的信息仅用于匹配撮合，数据安全加密
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     SHEET OVERLAY (for match detail)
+     ================================================================ -->
+<div class="sheet-overlay" id="sheetOverlay" onclick="closeSheet(event)">
+  <div class="sheet" id="sheet" onclick="event.stopPropagation()">
+    <div class="handle"></div>
+    <div id="sheetContent"></div>
+  </div>
+</div>
+
+<!-- ================================================================
+     TOAST CONTAINER
+     ================================================================ -->
+<div class="toast-container" id="toastContainer" role="status" aria-live="polite"></div>
+
+<!-- ================================================================
+     JAVASCRIPT — 再塑通 AI v4.0
+     ================================================================ -->
+<script>
+'use strict';
+
+/* ===================================================================
+   ESCAPE HELPER (XSS protection)
+   =================================================================== */
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/* ===================================================================
+   CONFIGURATION
+   =================================================================== */
+const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:3456' : '/api';
+let lastFailedRequest = null;
+
+/* ===================================================================
+   API HELPER
+   =================================================================== */
+async function api(path, options = {}) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  try {
+    const { headers: optsHeaders, ...restOpts } = options;
+    const reqHeaders = { 'Content-Type': 'application/json', ...optsHeaders };
+    // 自动附加 JWT Token
+    if (state.token) {
+      reqHeaders['Authorization'] = 'Bearer ' + state.token;
+    }
+    const res = await fetch(API_BASE + path, {
+      headers: reqHeaders,
+      signal: controller.signal,
+      ...restOpts
+    });
+    clearTimeout(timeout);
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      // 401 → 自动弹出登录框
+      if (res.status === 401 && !path.includes('/auth/')) {
+        showRegistration();
+        throw new Error('请先登录');
+      }
+      throw new Error(errData.error || `HTTP ${res.status}`);
+    }
+    return await res.json();
+  } catch (e) {
+    clearTimeout(timeout);
+    lastFailedRequest = { path, options };
+    if (e.name === 'AbortError') {
+      showToast('请求超时，请检查网络后重试', 'error');
+    }
+    throw e;
+  }
+}
+
+/* ===================================================================
+   SECTION 1: TAXONOMY DATABASE (from v3)
+   =================================================================== */
+
+// ---- 1a. Waste Plastic Taxonomy (~180 entries) ----
+const WASTE_TAXONOMY = {
+  'PET三色瓶砖':         {cat:'PET', form:'瓶砖',   grade:'三色',   kw:['三色瓶砖','三色','PET瓶砖','瓶砖']},
+  'PET纯白瓶砖':         {cat:'PET', form:'瓶砖',   grade:'纯白',   kw:['纯白瓶砖','白瓶砖','纯白','白钢','白片砖']},
+  'PET蓝白瓶砖':         {cat:'PET', form:'瓶砖',   grade:'蓝白',   kw:['蓝白瓶砖','蓝白','蓝白片']},
+  'PET绿瓶砖':           {cat:'PET', form:'瓶砖',   grade:'绿色',   kw:['绿瓶砖','绿瓶','绿色瓶砖']},
+  'PET油瓶砖':           {cat:'PET', form:'瓶砖',   grade:'油瓶',   kw:['油瓶砖','PET油瓶','油瓶']},
+  'PET毛瓶砖':           {cat:'PET', form:'瓶砖',   grade:'毛瓶',   kw:['毛瓶砖','毛瓶','PET毛瓶']},
+  'PET透明散瓶':         {cat:'PET', form:'散瓶',   grade:'透明',   kw:['散瓶','透明散瓶','PET散瓶']},
+  'PET白色破碎料':       {cat:'PET', form:'破碎',   grade:'白色',   kw:['PET白破碎','PET白色破碎','白PET破碎']},
+  'PET净片':             {cat:'PET', form:'净片',   grade:'净片',   kw:['PET净片','净片','瓶片']},
+  'PET杂色破碎':         {cat:'PET', form:'破碎',   grade:'杂色',   kw:['PET杂色','杂PET']},
+  'PET吸塑片破碎':       {cat:'PET', form:'破碎',   grade:'吸塑',   kw:['PET吸塑','吸塑片','吸塑破碎']},
+  'PET黑色吸塑破碎':     {cat:'PET', form:'破碎',   grade:'黑色吸塑',kw:['PET黑吸塑','黑色吸塑','黑吸塑片']},
+  'PET瓶坯破碎料':       {cat:'PET', form:'破碎',   grade:'瓶坯',   kw:['PET瓶坯','瓶坯破碎','瓶坯料']},
+  'PET透明胶水膜破碎':   {cat:'PET', form:'破碎',   grade:'胶水膜', kw:['PET胶水膜','胶水膜','透明胶水膜']},
+  'PET枕芯料':           {cat:'PET', form:'破碎',   grade:'枕芯',   kw:['PET枕芯','枕芯料']},
+  'PET X光片':           {cat:'PET', form:'片材',   grade:'X光片',  kw:['X光片','PET片','光片']},
+  'PET打包带废料':       {cat:'PET', form:'废料',   grade:'打包带', kw:['PET打包带','打包带废料']},
+  'PET废丝':             {cat:'PET', form:'废丝',   grade:'杂色',   kw:['PET废丝','废丝']},
+  'PET膜':               {cat:'PET', form:'膜',     grade:'杂色',   kw:['PET膜','聚酯膜']},
+  'PET镀铝膜':           {cat:'PET', form:'膜',     grade:'镀铝',   kw:['PET镀铝膜','镀铝膜']},
+  'PP白色粉碎料':        {cat:'PP',  form:'粉碎',   grade:'白色',   kw:['PP白粉碎','丙白粉碎','白PP粉碎','白色PP粉碎']},
+  'PP灰色粉碎料':        {cat:'PP',  form:'粉碎',   grade:'灰色',   kw:['PP灰粉碎','灰PP','灰色PP']},
+  'PP杂色粉碎料':        {cat:'PP',  form:'粉碎',   grade:'杂色',   kw:['PP杂色','杂PP','杂色粉碎']},
+  'PP吨包破碎料':        {cat:'PP',  form:'破碎',   grade:'吨包',   kw:['吨包料','PP吨包','吨包破碎']},
+  'PP编织袋破碎':        {cat:'PP',  form:'破碎',   grade:'编织袋', kw:['编织袋','PP编织袋']},
+  'PP洗衣机桶破碎':      {cat:'PP',  form:'破碎',   grade:'洗衣机桶',kw:['洗衣机桶','PP洗衣机桶']},
+  'PP白桶破碎':          {cat:'PP',  form:'破碎',   grade:'白桶',   kw:['PP白桶','白桶破碎']},
+  'PP保险杠破碎':        {cat:'PP',  form:'破碎',   grade:'保险杠', kw:['保险杠','PP保险杠']},
+  'PP白色边角料':        {cat:'PP',  form:'边角料', grade:'白色',   kw:['PP边角料','白边角料','边角料']},
+  'PP膜':                {cat:'PP',  form:'膜',     grade:'杂色',   kw:['PP膜','丙膜','聚丙烯膜']},
+  'PP无纺布':            {cat:'PP',  form:'无纺布', grade:'白色',   kw:['PP无纺布','丙无纺布']},
+  'PP奶白吸塑片破碎':    {cat:'PP',  form:'破碎',   grade:'奶白吸塑',kw:['PP吸塑','奶白吸塑','PP奶白片']},
+  'PPR管粉碎料':         {cat:'PP',  form:'粉碎',   grade:'管材',   kw:['PPR管','PPR粉碎']},
+  'HDPE小中空破碎':      {cat:'HDPE',form:'破碎',   grade:'小中空', kw:['小中空','HDPE中空','小中空料','中空料']},
+  'HDPE大蓝桶破碎':      {cat:'HDPE',form:'破碎',   grade:'大蓝桶', kw:['大蓝桶','HDPE大桶','蓝桶破碎','大桶料']},
+  'HDPE娃哈哈破碎':      {cat:'HDPE',form:'破碎',   grade:'娃哈哈', kw:['娃哈哈','HDPE娃哈哈','奶瓶']},
+  'HDPE杂色中空破碎':    {cat:'HDPE',form:'破碎',   grade:'杂色中空',kw:['杂色中空','HDPE杂色','花乙料','花乙','统货']},
+  'HDPE瓶盖破碎':        {cat:'HDPE',form:'破碎',   grade:'瓶盖',   kw:['瓶盖料','HDPE瓶盖','瓶盖破碎']},
+  'HDPE管道破碎料':      {cat:'HDPE',form:'破碎',   grade:'管道',   kw:['管材料','HDPE管道','波纹管']},
+  'HDPE垃圾料':          {cat:'HDPE',form:'破碎',   grade:'垃圾',   kw:['HDPE垃圾','垃圾料']},
+  'LDPE大棚膜破碎':      {cat:'LDPE',form:'破碎',   grade:'大棚膜', kw:['大棚膜','LDPE大棚','大棚料','高压膜']},
+  'LDPE透明膜破碎':      {cat:'LDPE',form:'破碎',   grade:'透明',   kw:['透明膜','LDPE透明','98膜']},
+  'LDPE杂色膜破碎':      {cat:'LDPE',form:'破碎',   grade:'杂色',   kw:['杂色膜','LDPE杂色']},
+  'LDPE啤酒包破碎':      {cat:'LDPE',form:'破碎',   grade:'啤酒包', kw:['啤酒包','LDPE啤酒']},
+  'LDPE进口电缆皮破碎':  {cat:'LDPE',form:'破碎',   grade:'电缆皮', kw:['电缆皮','进口电缆皮']},
+  'LDPE黑丝破碎':        {cat:'LDPE',form:'破碎',   grade:'黑丝',   kw:['黑丝','LDPE黑丝']},
+  'LLDPE缠绕膜破碎':     {cat:'LLDPE',form:'破碎',  grade:'缠绕膜', kw:['缠绕膜','LLDPE缠绕','拉伸膜']},
+  'ABS灰白破碎':         {cat:'ABS', form:'破碎',   grade:'灰白',   kw:['ABS灰白','灰白破碎','灰白料']},
+  'ABS黑色破碎':         {cat:'ABS', form:'破碎',   grade:'黑色',   kw:['ABS黑色','黑ABS','黑料']},
+  'ABS花色破碎':         {cat:'ABS', form:'破碎',   grade:'花色',   kw:['ABS花色','花色ABS']},
+  'ABS电镀料破碎':       {cat:'ABS', form:'破碎',   grade:'电镀',   kw:['电镀料','ABS电镀']},
+  'ABS键盘壳破碎':       {cat:'ABS', form:'破碎',   grade:'键盘壳', kw:['键盘壳','ABS键盘']},
+  'ABS电瓶壳破碎':       {cat:'ABS', form:'破碎',   grade:'电瓶壳', kw:['电瓶壳','ABS电瓶']},
+  'ABS摩托车壳退漆破碎': {cat:'ABS', form:'破碎',   grade:'退漆',   kw:['退漆','ABS退漆','摩托车壳']},
+  'PC车灯破碎':          {cat:'PC',  form:'破碎',   grade:'车灯',   kw:['车灯','PC车灯','火牛料','死料']},
+  'PC透明破碎':          {cat:'PC',  form:'破碎',   grade:'透明',   kw:['PC透明','透明PC']},
+  'PC光盘破碎':          {cat:'PC',  form:'破碎',   grade:'光盘',   kw:['光盘料','PC光盘']},
+  'PC水桶破碎':          {cat:'PC',  form:'破碎',   grade:'水桶',   kw:['水桶','PC水桶']},
+  'PC水口破碎':          {cat:'PC',  form:'破碎',   grade:'水口',   kw:['水口料','PC水口']},
+  'PA66扎带破碎':        {cat:'PA',  form:'破碎',   grade:'扎带',   kw:['扎带','PA66扎带','尼龙扎带']},
+  'PA66气帘破碎':        {cat:'PA',  form:'破碎',   grade:'气帘',   kw:['气帘','PA66气帘']},
+  'PA6破碎料':           {cat:'PA',  form:'破碎',   grade:'通用',   kw:['PA6破碎','尼龙6','尼龙破碎']},
+  'PA6加纤破碎':         {cat:'PA',  form:'破碎',   grade:'加纤',   kw:['PA6加纤','加纤尼龙']},
+  'PVC白管破碎':         {cat:'PVC', form:'破碎',   grade:'白管',   kw:['白管','PVC白管']},
+  'PVC塑钢破碎':         {cat:'PVC', form:'破碎',   grade:'塑钢',   kw:['塑钢料','PVC塑钢']},
+  'PVC扣板破碎':         {cat:'PVC', form:'破碎',   grade:'扣板',   kw:['扣板','PVC扣板']},
+  'PVC墙纸破碎':         {cat:'PVC', form:'破碎',   grade:'墙纸',   kw:['墙纸','PVC墙纸']},
+  'PVC地板砖破碎':       {cat:'PVC', form:'破碎',   grade:'地板砖', kw:['地板砖','PVC地板']},
+  'PS冰箱破碎':          {cat:'PS',  form:'破碎',   grade:'冰箱',   kw:['冰箱料','PS冰箱']},
+  'PS电视机壳破碎':      {cat:'PS',  form:'破碎',   grade:'电视机壳',kw:['PS电视机壳','电视机壳']},
+  'HIPS破碎料':          {cat:'PS',  form:'破碎',   grade:'HIPS',   kw:['HIPS破碎','HIPS']},
+  'PMMA破碎料':          {cat:'PMMA',form:'破碎',   grade:'通用',   kw:['亚克力','PMMA破碎','有机玻璃']},
+  'POM破碎料':           {cat:'POM', form:'破碎',   grade:'通用',   kw:['赛钢','POM破碎','聚甲醛']},
+  'EPS泡沫':             {cat:'EPS', form:'泡沫',   grade:'通用',   kw:['泡沫料','EPS','苯板']},
+  'EPS热熔块':           {cat:'EPS', form:'热熔块', grade:'通用',   kw:['热熔块','EPS热熔']},
+  'EPS冷压块':           {cat:'EPS', form:'冷压块', grade:'通用',   kw:['冷压块','EPS冷压']},
+  'PA46破碎料':          {cat:'PA',  form:'破碎',   grade:'PA46',   kw:['PA46','尼龙46']},
+  'PA12破碎料':          {cat:'PA',  form:'破碎',   grade:'PA12',   kw:['PA12','尼龙12']},
+  'PPS破碎料':           {cat:'PPS', form:'破碎',   grade:'通用',   kw:['PPS破碎','电木粉']},
+  'PBT破碎料':           {cat:'PBT', form:'破碎',   grade:'通用',   kw:['PBT破碎']},
+  'EVA破碎料':           {cat:'EVA', form:'破碎',   grade:'通用',   kw:['EVA破碎']},
+  'TPE废料':             {cat:'TPE', form:'废料',   grade:'通用',   kw:['TPE废料']},
+  'TPU废料':             {cat:'TPU', form:'废料',   grade:'通用',   kw:['TPU废料']},
+  'EPE废料':             {cat:'EPE', form:'废料',   grade:'通用',   kw:['EPE','珍珠棉']},
+  'PEEK破碎':            {cat:'PEEK',form:'破碎',   grade:'通用',   kw:['PEEK破碎','聚醚醚酮']},
+  'PPO破碎':             {cat:'PPO', form:'破碎',   grade:'通用',   kw:['PPO破碎']},
+  'PSU破碎':             {cat:'PSU', form:'破碎',   grade:'通用',   kw:['PSU破碎','聚砜']},
+  'HDPE/LDPE混合膜':     {cat:'PE',  form:'膜',     grade:'混合',   kw:['低压膜','混合膜','PE膜']},
+  'PP/PE混合破碎':       {cat:'PE',  form:'破碎',   grade:'PP/PE混合',kw:['PP/PE混合']},
+};
+
+// ---- 1b. Recycled Pellet Taxonomy (~120 entries) ----
+const RECYCLED_TAXONOMY = {
+  'PET透明再生颗粒':     {cat:'PET', form:'颗粒', grade:'透明',   kw:['PET透明颗粒','透明PET颗粒','PCR PET']},
+  'PET蓝白再生颗粒':     {cat:'PET', form:'颗粒', grade:'蓝白',   kw:['PET蓝白颗粒','蓝白PET']},
+  'PET绿色再生颗粒':     {cat:'PET', form:'颗粒', grade:'绿色',   kw:['PET绿色颗粒','绿色PET']},
+  'PET 3A白切片':        {cat:'PET', form:'切片', grade:'3A白',   kw:['3A白','大有光','特级料','PET切片']},
+  'PET蓝白切片':         {cat:'PET', form:'切片', grade:'蓝白',   kw:['半消光','PET蓝白切片']},
+  'PET绿色切片':         {cat:'PET', form:'切片', grade:'绿色',   kw:['全消光','PET绿色切片']},
+  'PP注塑级再生颗粒':    {cat:'PP',  form:'颗粒', grade:'注塑级', kw:['丙料','PP注塑','回料','副牌料','PP再生']},
+  'PP拉丝级再生颗粒':    {cat:'PP',  form:'颗粒', grade:'拉丝级', kw:['PP拉丝','拉丝PP']},
+  'PP吹膜级再生颗粒':    {cat:'PP',  form:'颗粒', grade:'吹膜级', kw:['PP吹膜','吹膜PP']},
+  'PP白色再生颗粒':      {cat:'PP',  form:'颗粒', grade:'白色',   kw:['瓷白','一级料','PP白颗粒','白PP颗粒']},
+  'PP本色再生颗粒':      {cat:'PP',  form:'颗粒', grade:'本色',   kw:['二级料','PP本色颗粒']},
+  'PP黑色再生颗粒':      {cat:'PP',  form:'颗粒', grade:'黑色',   kw:['三级料','PP黑颗粒','黑PP颗粒']},
+  'PP耐寒再生颗粒':      {cat:'PP',  form:'颗粒', grade:'耐寒',   kw:['耐寒PP','PP耐寒']},
+  'PP食品级再生颗粒':    {cat:'PP',  form:'颗粒', grade:'食品级', kw:['食品级','环保级','PP食品级']},
+  'PP GRS再生颗粒':      {cat:'PP',  form:'颗粒', grade:'GRS',    kw:['PP GRS','GRS PP']},
+  'HDPE吹塑级再生颗粒':  {cat:'HDPE',form:'颗粒', grade:'吹塑级', kw:['乙料','HDPE吹塑','吹塑HDPE']},
+  'HDPE注塑级再生颗粒':  {cat:'HDPE',form:'颗粒', grade:'注塑级', kw:['HDPE注塑','注塑HDPE']},
+  'HDPE管道级再生颗粒':  {cat:'HDPE',form:'颗粒', grade:'管道级', kw:['HDPE管道','管道HDPE']},
+  'LDPE发泡级再生颗粒':  {cat:'LDPE',form:'颗粒', grade:'发泡级', kw:['LDPE发泡','发泡LDPE','XPE']},
+  'LDPE吹膜级再生颗粒':  {cat:'LDPE',form:'颗粒', grade:'吹膜级', kw:['LDPE吹膜','吹膜LDPE']},
+  'LLDPE缠绕膜再生颗粒': {cat:'LLDPE',form:'颗粒',grade:'缠绕膜级',kw:['LLDPE颗粒']},
+  'ABS本色再生颗粒':     {cat:'ABS', form:'颗粒', grade:'本色',   kw:['ABS本色','757','ABS原色']},
+  'ABS黑色再生颗粒':     {cat:'ABS', form:'颗粒', grade:'黑色',   kw:['ABS黑色颗粒','黑ABS颗粒','15A1','改性黑','超黑']},
+  'ABS灰白再生颗粒':     {cat:'ABS', form:'颗粒', grade:'灰白',   kw:['ABS灰白颗粒']},
+  'ABS阻燃再生颗粒':     {cat:'ABS', form:'颗粒', grade:'阻燃',   kw:['阻燃ABS','V0料','V0 ABS']},
+  'ABS高光再生颗粒':     {cat:'ABS', form:'颗粒', grade:'高光',   kw:['高光料','ABS高光']},
+  'ABS高抗冲再生颗粒':   {cat:'ABS', form:'颗粒', grade:'高抗冲', kw:['高抗冲ABS','ABS高抗冲']},
+  'ABS耐热再生颗粒':     {cat:'ABS', form:'颗粒', grade:'耐热',   kw:['耐候ABS','ABS耐热']},
+  'PC透明再生颗粒':      {cat:'PC',  form:'颗粒', grade:'透明',   kw:['透明PC','PC透白','透白']},
+  'PC黑色再生颗粒':      {cat:'PC',  form:'颗粒', grade:'黑色',   kw:['黑PC','钢琴黑']},
+  'PC增韧再生颗粒':      {cat:'PC',  form:'颗粒', grade:'增韧',   kw:['增韧PC','PC增韧']},
+  'PA66再生颗粒':        {cat:'PA',  form:'颗粒', grade:'通用',   kw:['PA66颗粒','尼龙66再生']},
+  'PA6再生颗粒':         {cat:'PA',  form:'颗粒', grade:'通用',   kw:['PA6颗粒','尼龙6再生']},
+  'PA6加纤再生颗粒':     {cat:'PA',  form:'颗粒', grade:'加纤',   kw:['加纤尼龙','PA6GF','GF PA6']},
+  'PA66加纤再生颗粒':    {cat:'PA',  form:'颗粒', grade:'加纤',   kw:['PA66GF','GF PA66']},
+  'PVC再生颗粒':         {cat:'PVC', form:'颗粒', grade:'通用',   kw:['PVC颗粒','PVC再生']},
+  'PS再生颗粒':          {cat:'PS',  form:'颗粒', grade:'通用',   kw:['透苯','PS颗粒']},
+  'HIPS再生颗粒':        {cat:'PS',  form:'颗粒', grade:'HIPS',   kw:['改苯','HIPS颗粒','475']},
+  'ABS/PMMA合金再生颗粒':{cat:'ABS', form:'颗粒', grade:'合金',   kw:['ABS/PMMA合金']},
+  'PC/ABS合金再生颗粒':  {cat:'PC',  form:'颗粒', grade:'合金',   kw:['PC/ABS合金']},
+  'POM再生颗粒':         {cat:'POM', form:'颗粒', grade:'通用',   kw:['POM颗粒','赛钢颗粒','耐磨']},
+  'PMMA再生颗粒':        {cat:'PMMA',form:'颗粒', grade:'通用',   kw:['PMMA颗粒','亚克力颗粒']},
+  'PBT再生颗粒':         {cat:'PBT', form:'颗粒', grade:'通用',   kw:['PBT颗粒']},
+  'TPE再生颗粒':         {cat:'TPE', form:'颗粒', grade:'通用',   kw:['TPE颗粒']},
+  'TPU再生颗粒':         {cat:'TPU', form:'颗粒', grade:'通用',   kw:['TPU颗粒']},
+  'POE再生颗粒':         {cat:'POE', form:'颗粒', grade:'通用',   kw:['POE颗粒']},
+  'HIPS注塑级本色再生颗粒':{cat:'PS',form:'颗粒', grade:'注塑级本色', kw:['HIPS注塑本色','注塑HIPS本色']},
+  'HIPS高光再生颗粒':     {cat:'PS',  form:'颗粒', grade:'高光',   kw:['HIPS高光','高光HIPS']},
+  'EPS阻燃V0再生颗粒':    {cat:'PS',  form:'颗粒', grade:'阻燃V0', kw:['EPSV0','EPS阻燃V0']},
+  'POM黑色再生颗粒':      {cat:'POM', form:'颗粒', grade:'黑色',   kw:['POM黑颗粒','黑POM','赛钢黑']},
+  'POM白色再生颗粒':      {cat:'POM', form:'颗粒', grade:'白色',   kw:['POM白颗粒','白POM','赛钢白']},
+  'PMMA黑色再生颗粒':     {cat:'PMMA',form:'颗粒', grade:'黑色',   kw:['PMMA黑','黑亚克力','黑PMMA']},
+  'PMMA白色再生颗粒':     {cat:'PMMA',form:'颗粒', grade:'白色',   kw:['PMMA白','白亚克力','白PMMA']},
+  'PBT加纤15%再生颗粒':   {cat:'PBT', form:'颗粒', grade:'加纤15%', kw:['PBTGF15','PBT加纤15']},
+  'PBT加纤30%再生颗粒':   {cat:'PBT', form:'颗粒', grade:'加纤30%', kw:['PBTGF30','PBT加纤30']},
+  'TPE透明再生颗粒':      {cat:'TPE', form:'颗粒', grade:'透明',   kw:['TPE透明','透明TPE']},
+  'TPE黑色再生颗粒':      {cat:'TPE', form:'颗粒', grade:'黑色',   kw:['TPE黑','黑色TPE']},
+  'TPU透明再生颗粒':      {cat:'TPU', form:'颗粒', grade:'透明',   kw:['TPU透明','透明TPU']},
+  'TPU黑色再生颗粒':      {cat:'TPU', form:'颗粒', grade:'黑色',   kw:['TPU黑','黑色TPU']},
+  'TPV再生颗粒':          {cat:'TPV', form:'颗粒', grade:'通用',   kw:['TPV颗粒','TPV再生','硫化弹性体']},
+  'SBS再生颗粒':          {cat:'SBS', form:'颗粒', grade:'通用',   kw:['SBS颗粒','SBS再生']},
+  'SEBS再生颗粒':         {cat:'SEBS',form:'颗粒', grade:'通用',   kw:['SEBS颗粒','SEBS再生']},
+  'PA46再生颗粒':         {cat:'PA',  form:'颗粒', grade:'通用',   kw:['PA46颗粒','PA46再生','尼龙46']},
+  'PA12再生颗粒':         {cat:'PA',  form:'颗粒', grade:'通用',   kw:['PA12颗粒','PA12再生','尼龙12']},
+  'PEEK再生颗粒':         {cat:'PEEK',form:'颗粒', grade:'通用',   kw:['PEEK颗粒','PEEK再生','聚醚醚酮']},
+  'PPO加纤再生颗粒':      {cat:'PPO', form:'颗粒', grade:'加纤',   kw:['PPO加纤','加纤PPO','PPOGF']},
+  'PPS加纤再生颗粒':      {cat:'PPS', form:'颗粒', grade:'加纤',   kw:['PPS加纤','加纤PPS','PPSGF']},
+  'PSU再生颗粒':          {cat:'PSU', form:'颗粒', grade:'通用',   kw:['PSU颗粒','PSU再生','聚砜颗粒']},
+  'PET GRS再生颗粒':      {cat:'PET', form:'颗粒', grade:'GRS',    kw:['PET GRS','GRS PET','PET认证']},
+};
+
+// ---- 1c. Black Speech (行话) Mapping ----
+const BLACK_SPEECH = {
+  '花乙料':   'HDPE杂色中空破碎',  '花乙':     'HDPE杂色中空破碎',
+  '响料':     'ABS灰白破碎',       '火牛料':   'PC车灯破碎',
+  '沉底料':   'PP杂色粉碎料',      '白钢':     'PET纯白瓶砖',
+  '98膜':     'LDPE透明膜破碎',    '三色':     'PET三色瓶砖',
+  '蓝白':     'PET蓝白瓶砖',       '娃哈哈':   'HDPE娃哈哈破碎',
+  '大蓝桶':   'HDPE大蓝桶破碎',    '小中空':   'HDPE小中空破碎',
+  '黑料':     'ABS黑色再生颗粒',   '丙料':     'PP注塑级再生颗粒',
+  '乙料':     'HDPE吹塑级再生颗粒','钢料':     'PET纯白瓶砖',
+  '大棚膜':   'LDPE大棚膜破碎',    '吨包':     'PP吨包破碎料',
+  '编织袋':   'PP编织袋破碎',      '扎带':     'PA66扎带破碎',
+  '光盘':     'PC光盘破碎',        '车灯':     'PC车灯破碎',
+  '水桶':     'PC水桶破碎',        '日化瓶':   'HDPE小中空破碎',
+  '奶瓶':     'HDPE娃哈哈破碎',    '电镀':     'ABS电镀料破碎',
+  '冰箱料':   'PS冰箱破碎',        '缠绕膜':   'LLDPE缠绕膜破碎',
+  '亚克力':   'PMMA破碎料',        '赛钢':     'POM破碎料',
+  '白管':     'PVC白管破碎',       '塑钢':     'PVC塑钢破碎',
+  '瓶盖料':   'HDPE瓶盖破碎',      '保险杠':   'PP保险杠破碎',
+  '波纹管':   'HDPE管道破碎料',    '吸塑':     'PET吸塑片破碎',
+  '瓶片':     'PET净片',           '拉伸膜':   'LLDPE缠绕膜破碎',
+  '苯板':     'EPS泡沫',           '有机玻璃': 'PMMA破碎料',
+  '聚甲醛':   'POM破碎料',         '尼龙':     'PA6破碎料',
+  '透苯':     'PS再生颗粒',        '改苯':     'HIPS再生颗粒',
+  '高压膜':   'LDPE透明膜破碎',    '低压膜':   'HDPE/LDPE混合膜',
+  '沉底丙':   'PP杂色粉碎料',      '浮水料':   'PP白色粉碎料',
+  '中空料':   'HDPE小中空破碎',    '大桶料':   'HDPE大蓝桶破碎',
+  '净片料':   'PET净片',           '泡沫料':   'EPS泡沫',
+  '丙膜':     'PP膜',              '丙无纺布': 'PP无纺布',
+  '大棚料':   'LDPE大棚膜破碎',    '管材料':   'HDPE管道破碎料',
+  '改性黑':   'ABS黑色再生颗粒',   '改性本色': 'ABS本色再生颗粒',
+  '加纤尼龙': 'PA6加纤再生颗粒',   '阻燃ABS':  'ABS阻燃再生颗粒',
+  'V0料':     'ABS阻燃再生颗粒',   '高光料':   'ABS高光再生颗粒',
+  '瓷白料':   'PP白色粉碎料',      '灰白料':   'ABS灰白破碎',
+  '软料':     'LDPE透明膜破碎',    '毛料':     'PET毛瓶砖',
+  '统货':     'HDPE杂色中空破碎',  '水口料':   'PC水口破碎',
+  '胶头':     'PP杂色粉碎料',      '死料':     'PC车灯破碎',
+  '耙耙料':   'PP杂色粉碎料',      '磨粉料':   'PP白色粉碎料',
+  '边角料':   'PP白色边角料',      '回料':     'PP注塑级再生颗粒',
+  '副牌料':   'PP注塑级再生颗粒',  '475':      'HIPS再生颗粒',
+  '757':      'ABS本色再生颗粒',   '15A1':     'ABS黑色再生颗粒',
+  '大有光':   'PET 3A白切片',      '半消光':   'PET蓝白切片',
+  '全消光':   'PET绿色切片',       '3A白':     'PET 3A白切片',
+  '瓷白':     'PP白色再生颗粒',    '奶白':     'PP奶白吸塑片破碎',
+  '透白':     'PC透明再生颗粒',    '超黑':     'ABS黑色再生颗粒',
+  '钢琴黑':   'PC黑色再生颗粒',    'GF':       'PA6加纤再生颗粒',
+  'V0':       'ABS阻燃再生颗粒',   'GRS':      'PP GRS再生颗粒',
+  'PCR':      'PET透明再生颗粒',   '高抗冲':   'ABS高抗冲再生颗粒',
+  '加纤':     'PA6加纤再生颗粒',   '阻燃':     'ABS阻燃再生颗粒',
+  '增韧':     'PC增韧再生颗粒',    '耐寒':     'PP耐寒再生颗粒',
+  '耐候':     'ABS耐热再生颗粒',   '耐磨':     'POM再生颗粒',
+  '食品级':   'PP食品级再生颗粒',  '环保级':   'PP食品级再生颗粒',
+  '特级料':   'PET 3A白切片',      '一级料':   'PP白色再生颗粒',
+  '二级料':   'PP本色再生颗粒',    '三级料':   'PP黑色再生颗粒',
+  'PPR':      'PPR管粉碎料',       'BOPP':     'PP膜',
+  'EPE':      'EPE废料',           'XPE':      'LDPE发泡级再生颗粒',
+  'POE':      'POE再生颗粒',       'TPE':      'TPE再生颗粒',
+  'TPU':      'TPU再生颗粒',       '电木粉':   'PPS破碎料',
+  '净砖':     'PET纯白瓶砖',       '毛砖':     'PET毛瓶砖',
+  '散瓶':     'PET透明散瓶',       '瓶坯料':   'PET瓶坯破碎料',
+  '三色瓶砖': 'PET三色瓶砖',       '油瓶':     'PET油瓶砖',
+  '小中空':   'HDPE小中空破碎',    '大蓝桶':   'HDPE大蓝桶破碎',
+  '啤酒包':   'LDPE啤酒包破碎',    '黑丝':     'LDPE黑丝破碎',
+  '电缆皮':   'LDPE进口电缆皮破碎','电瓶壳':   'ABS电瓶壳破碎',
+  '键盘壳':   'ABS键盘壳破碎',     '退漆':     'ABS摩托车壳退漆破碎',
+  '扣板':     'PVC扣板破碎',       '塑钢料':   'PVC塑钢破碎',
+  '墙纸':     'PVC墙纸破碎',       '地板砖':   'PVC地板砖破碎',
+  '光盘料':   'PC光盘破碎',        '泡沫':     'EPS泡沫',
+  '热熔块':   'EPS热熔块',         '冷压块':   'EPS冷压块',
+};
+
+// ---- 1d. Location Database ----
+const LOCATION_MAP = {
+  '定州':'河北定州','界首':'安徽界首','临沂':'山东临沂','樟木头':'广东东莞',
+  '余姚':'浙江余姚','顺德':'广东佛山','任丘':'河北任丘','保定':'河北保定',
+  '廊坊':'河北廊坊','文安':'河北廊坊','莱州':'山东莱州','日照':'山东日照',
+  '邯郸':'河北邯郸','徐州':'江苏徐州','台州':'浙江台州','慈溪':'浙江慈溪',
+  '常州':'江苏常州','无锡':'江苏无锡','苏州':'江苏苏州','南京':'江苏南京',
+  '东莞':'广东东莞','佛山':'广东佛山','广州':'广东广州','深圳':'广东深圳',
+  '汕头':'广东汕头','揭阳':'广东揭阳','潮州':'广东潮州','泉州':'福建泉州',
+  '福州':'福建福州','厦门':'福建厦门','温州':'浙江温州','宁波':'浙江宁波',
+  '嘉兴':'浙江嘉兴','青岛':'山东青岛','济南':'山东济南','烟台':'山东烟台',
+  '淄博':'山东淄博','潍坊':'山东潍坊','聊城':'山东聊城','德州':'山东德州',
+  '滨州':'山东滨州','东营':'山东东营','威海':'山东威海','菏泽':'山东菏泽',
+  '天津':'天津','沧州':'河北沧州','石家庄':'河北石家庄','邢台':'河北邢台',
+  '唐山':'河北唐山','衡水':'河北衡水','秦皇岛':'河北秦皇岛','张家口':'河北张家口',
+  '郑州':'河南郑州','洛阳':'河南洛阳','新乡':'河南新乡','许昌':'河南许昌',
+  '商丘':'河南商丘','南阳':'河南南阳','驻马店':'河南驻马店','周口':'河南周口',
+  '武汉':'湖北武汉','襄阳':'湖北襄阳','荆州':'湖北荆州','宜昌':'湖北宜昌',
+  '长沙':'湖南长沙','株洲':'湖南株洲','湘潭':'湖南湘潭','衡阳':'湖南衡阳',
+  '合肥':'安徽合肥','阜阳':'安徽阜阳','芜湖':'安徽芜湖','安庆':'安徽安庆',
+  '南昌':'江西南昌','赣州':'江西赣州','九江':'江西九江','宜春':'江西宜春',
+  '成都':'四川成都','绵阳':'四川绵阳','德阳':'四川德阳','宜宾':'四川宜宾',
+  '重庆':'重庆','西安':'陕西西安','宝鸡':'陕西宝鸡','咸阳':'陕西咸阳',
+  '沈阳':'辽宁沈阳','大连':'辽宁大连','鞍山':'辽宁鞍山','营口':'辽宁营口',
+  '长春':'吉林长春','吉林':'吉林','哈尔滨':'黑龙江哈尔滨','大庆':'黑龙江大庆',
+  '上海':'上海','北京':'北京','杭州':'浙江杭州','湖州':'浙江湖州',
+  '绍兴':'浙江绍兴','金华':'浙江金华','南通':'江苏南通','扬州':'江苏扬州',
+  '镇江':'江苏镇江','泰州':'江苏泰州','盐城':'江苏盐城','淮安':'江苏淮安',
+  '章丘':'山东章丘','玉田':'河北玉田','汨罗':'湖南汨罗','贵屿':'广东贵屿',
+  '光武':'安徽光武',
+};
+
+/* ===================================================================
+   SECTION 2: MARKET PRICE DATA (static backup, overridden by API)
+   =================================================================== */
+const WASTE_MARKET_DEFAULT = [
+  {cat:'PET废塑料', icon:'🫙', items:[
+    {n:'PET三色瓶砖',       l:4200, h:5200, t:'up',   c:'+3.2%'},
+    {n:'PET纯白瓶砖',       l:4800, h:5800, t:'up',   c:'+2.8%'},
+    {n:'PET蓝白瓶砖',       l:4400, h:5400, t:'flat', c:'0%'},
+    {n:'PET白色破碎料',     l:5000, h:6200, t:'up',   c:'+1.5%'},
+    {n:'PET净片',           l:5500, h:6800, t:'up',   c:'+2.0%'},
+  ]},
+  {cat:'PP废塑料', icon:'🧴', items:[
+    {n:'PP白色粉碎料',      l:5800, h:6800, t:'up',   c:'+2.1%'},
+    {n:'PP灰色粉碎料',      l:4800, h:5600, t:'flat', c:'0%'},
+    {n:'PP吨包破碎料',      l:4200, h:5000, t:'down', c:'-1.2%'},
+    {n:'PP编织袋破碎',      l:3500, h:4200, t:'down', c:'-0.8%'},
+    {n:'PP洗衣机桶破碎',    l:5200, h:6000, t:'flat', c:'+0.5%'},
+  ]},
+  {cat:'HDPE废塑料', icon:'🪣', items:[
+    {n:'HDPE小中空破碎',    l:5600, h:6600, t:'up',   c:'+2.5%'},
+    {n:'HDPE大蓝桶破碎',    l:5000, h:6000, t:'flat', c:'+0.3%'},
+    {n:'HDPE娃哈哈破碎',    l:5200, h:6200, t:'up',   c:'+1.8%'},
+    {n:'HDPE杂色中空破碎',  l:4200, h:5000, t:'flat', c:'-0.2%'},
+  ]},
+  {cat:'ABS废塑料', icon:'🧩', items:[
+    {n:'ABS灰白破碎',       l:7200, h:8500, t:'up',   c:'+4.1%'},
+    {n:'ABS黑色破碎',       l:6500, h:7500, t:'up',   c:'+3.5%'},
+    {n:'ABS花色破碎',       l:5500, h:6800, t:'flat', c:'-0.5%'},
+    {n:'ABS电镀料破碎',     l:6000, h:7200, t:'up',   c:'+2.0%'},
+  ]},
+  {cat:'PC废塑料', icon:'💿', items:[
+    {n:'PC车灯破碎',        l:8500, h:9800, t:'up',   c:'+5.2%'},
+    {n:'PC透明破碎',        l:9000, h:11000,t:'up',   c:'+3.8%'},
+    {n:'PC光盘破碎',        l:7000, h:8500, t:'up',   c:'+4.0%'},
+  ]},
+  {cat:'PA废塑料', icon:'🧵', items:[
+    {n:'PA66扎带破碎',      l:10500,h:12800,t:'up',   c:'+6.1%'},
+    {n:'PA6破碎料',         l:7500, h:9000, t:'flat', c:'+1.0%'},
+    {n:'PA66气帘破碎',      l:11000,h:13500,t:'up',   c:'+5.8%'},
+  ]},
+  {cat:'LDPE/LLDPE', icon:'🎞️', items:[
+    {n:'LDPE大棚膜破碎',    l:3800, h:4800, t:'down', c:'-2.1%'},
+    {n:'LDPE透明膜破碎',    l:4500, h:5500, t:'flat', c:'+0.5%'},
+    {n:'LLDPE缠绕膜破碎',   l:4000, h:5000, t:'down', c:'-1.5%'},
+  ]},
+  {cat:'PVC/PS/其他', icon:'📦', items:[
+    {n:'PVC白管破碎',       l:3200, h:4200, t:'flat', c:'0%'},
+    {n:'PS冰箱破碎',        l:4500, h:5800, t:'flat', c:'0%'},
+    {n:'PMMA破碎料',        l:6500, h:8200, t:'up',   c:'+2.0%'},
+  ]},
+];
+
+const RECYCLED_MARKET_DEFAULT = [
+  {cat:'PET再生料', icon:'🧴', items:[
+    {n:'PET透明再生颗粒',   l:6500, h:8000, t:'up',   c:'+3.5%'},
+    {n:'PET蓝白再生颗粒',   l:5800, h:7200, t:'flat', c:'+1.0%'},
+    {n:'PET 3A白切片',      l:7500, h:9500, t:'up',   c:'+4.2%'},
+  ]},
+  {cat:'PP再生料', icon:'♻️', items:[
+    {n:'PP注塑级再生颗粒',  l:6800, h:8200, t:'up',   c:'+2.5%'},
+    {n:'PP拉丝级再生颗粒',  l:6200, h:7500, t:'flat', c:'+1.2%'},
+    {n:'PP白色再生颗粒',    l:7200, h:8800, t:'up',   c:'+3.1%'},
+    {n:'PP黑色再生颗粒',    l:5200, h:6500, t:'down', c:'-1.5%'},
+  ]},
+  {cat:'HDPE再生料', icon:'🪣', items:[
+    {n:'HDPE吹塑级再生颗粒',l:7500, h:9000, t:'up',   c:'+2.8%'},
+    {n:'HDPE注塑级再生颗粒',l:6800, h:8200, t:'up',   c:'+1.8%'},
+    {n:'HDPE管道级再生颗粒',l:8200, h:9800, t:'up',   c:'+3.2%'},
+  ]},
+  {cat:'ABS/PC/PA再生料', icon:'🔩', items:[
+    {n:'ABS本色再生颗粒',   l:9500, h:12000,t:'up',   c:'+4.5%'},
+    {n:'ABS黑色再生颗粒',   l:8500, h:10500,t:'up',   c:'+3.8%'},
+    {n:'ABS阻燃再生颗粒',   l:12000,h:15000,t:'up',   c:'+5.1%'},
+    {n:'PC透明再生颗粒',    l:10500,h:13000,t:'up',   c:'+4.0%'},
+    {n:'PA66再生颗粒',      l:13500,h:16500,t:'up',   c:'+5.5%'},
+    {n:'PA6再生颗粒',       l:9500, h:12000,t:'flat', c:'+1.0%'},
+  ]},
+  {cat:'其他再生料', icon:'📦', items:[
+    {n:'POM再生颗粒',       l:8000, h:10000,t:'flat', c:'0%'},
+    {n:'PMMA再生颗粒',      l:10000,h:12500,t:'up',   c:'+3.0%'},
+    {n:'PVC再生颗粒',       l:4200, h:5500, t:'down', c:'-2.0%'},
+  ]},
+];
+
+/* ===================================================================
+   SECTION 3: STATE MANAGEMENT
+   =================================================================== */
+let state = {
+  userId: null,
+  userName: '',
+  userRole: '',
+  userLocation: '',
+  userPhone: '',
+  userEmail: '',
+  userCompany: '',
+  token: null,
+  activeTab: 'home',
+  matchFilter: 'all',
+  marketTab: 'waste',
+  // API-cached data
+  listings: [],
+  matches: [],
+  prices: null,
+  stats: null,
+  parseHistory: [],
+};
+
+function saveSession() {
+  try {
+    localStorage.setItem('zs5_session', JSON.stringify({
+      userId: state.userId,
+      userName: state.userName,
+      userRole: state.userRole,
+      userLocation: state.userLocation,
+      userPhone: state.userPhone,
+      userEmail: state.userEmail,
+      userCompany: state.userCompany,
+      token: state.token,
+    }));
+  } catch(e) {}
+}
+
+function loadSession() {
+  // Also load vision history
+  try {
+    const vh = localStorage.getItem('zs5_vision_history');
+    if (vh) state._visionHistory = JSON.parse(vh);
+  } catch(e) {}
+
+  try {
+    const d = JSON.parse(localStorage.getItem('zs5_session'));
+    if (d && typeof d === 'object') {
+      state.userId = d.userId || null;
+      state.userName = d.userName || '';
+      state.userRole = d.userRole || '';
+      state.userLocation = d.userLocation || '';
+      state.userPhone = d.userPhone || '';
+      state.userEmail = d.userEmail || '';
+      state.userCompany = d.userCompany || '';
+      state.token = d.token || null;
+    }
+  } catch(e) {}
+}
+
+function isLoggedIn() {
+  return !!(state.token && state.userId && state.userName && state.userRole);
+}
+
+/* ===================================================================
+   SECTION 4: UI HELPERS
+   =================================================================== */
+function showToast(msg, type, withRetry) {
+  const container = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast ' + (type || '');
+  t.innerHTML = '<span>' + escapeHtml(msg) + '</span>' +
+    (withRetry ? '<span class="toast-retry" onclick="retryFailedRequest();this.parentElement.remove()">重试</span>' : '');
+  container.appendChild(t);
+  requestAnimationFrame(() => { t.classList.add('show'); });
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3500);
+}
+
+function toggleLoading(id, show) {
+  const el = document.getElementById(id);
+  if (el) {
+    if (show) { el.classList.add('show'); }
+    else { el.classList.remove('show'); }
+  }
+}
+
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const diff = Date.now() - new Date(dateStr).getTime();
+  if (isNaN(diff)) return '';
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return mins <= 0 ? '刚刚' : mins + '分钟前';
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + '小时前';
+  const days = Math.floor(hrs / 24);
+  if (days < 30) return days + '天前';
+  return dateStr.slice(0, 10);
+}
+
+function retryFailedRequest() {
+  if (!lastFailedRequest) return;
+  document.getElementById('networkBar').classList.remove('show');
+  const { path, options } = lastFailedRequest;
+  lastFailedRequest = null;
+  api(path, options).then(() => {
+    showToast('✅ 重试成功', 'success');
+    refreshCurrentTab();
+  }).catch((e) => { if (e && e.name !== 'AbortError') showToast('重试失败，请稍后再试', 'error'); });
+}
+
+/* ===================================================================
+   SECTION 5: NAVIGATION
+   =================================================================== */
+function switchTab(tab) {
+  state.activeTab = tab;
+  if (state._autoNavTimer) { clearTimeout(state._autoNavTimer); state._autoNavTimer = null; }
+  // Restore bottom nav when leaving chat
+  const bottomNav = document.querySelector('.bottom-nav');
+  if (bottomNav) bottomNav.style.display = '';
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const pageEl = document.getElementById('page-' + tab);
+  if (pageEl) pageEl.classList.add('active');
+  document.querySelectorAll('.bottom-nav .tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
+  const navTab = document.querySelector('.bottom-nav .tab[data-page="' + tab + '"]');
+  if (navTab) { navTab.classList.add('active'); navTab.setAttribute('aria-selected', 'true'); }
+
+  // Clear periodic refresh when leaving home
+  if (tab !== 'home' && state._refreshInterval) {
+    clearInterval(state._refreshInterval);
+    state._refreshInterval = null;
+  } else if (tab === 'home' && !state._refreshInterval && isLoggedIn()) {
+    state._refreshInterval = setInterval(() => {
+      if (state.activeTab === 'home' && isLoggedIn() && document.visibilityState === 'visible') {
+        loadHomePage();
+      }
+    }, 60000);
+  }
+
+  if (tab === 'home') loadHomePage();
+  if (tab === 'match') loadMatchPage();
+  if (tab === 'market') loadMarketPage();
+  if (tab === 'me') loadProfilePage();
+  if (tab === 'messages') loadConversations();
+  if (tab === 'vision') loadVisionHistory();
+  if (tab === 'enterprise') { loadEnterpriseProfile(); if (bottomNav) bottomNav.style.display = 'none'; }
+  if (tab === 'deals') loadDealsPage();
+  if (tab === 'chat' && state._chatConversationId) loadChat(state._chatConversationId);
+}
+
+function refreshCurrentTab() {
+  const t = state.activeTab;
+  if (t === 'home') loadHomePage();
+  if (t === 'match') loadMatchPage();
+  if (t === 'market') loadMarketPage();
+  if (t === 'me') loadProfilePage();
+  if (t === 'messages') loadConversations();
+  if (t === 'vision') loadVisionHistory();
+  if (t === 'enterprise') loadEnterpriseProfile();
+  if (t === 'deals') loadDealsPage();
+  if (t === 'chat' && state._chatConversationId) loadChat(state._chatConversationId);
+}
+
+/* ===================================================================
+   SECTION 6: AUTH (Login + Register)
+   =================================================================== */
+let authMode = 'login';
+
+function switchAuthTab(mode) {
+  authMode = mode;
+  document.getElementById('authTabLogin').style.background = mode === 'login' ? 'var(--card)' : 'transparent';
+  document.getElementById('authTabLogin').style.color = mode === 'login' ? 'var(--text)' : 'var(--text-hint)';
+  document.getElementById('authTabRegister').style.background = mode === 'register' ? 'var(--card)' : 'transparent';
+  document.getElementById('authTabRegister').style.color = mode === 'register' ? 'var(--text)' : 'var(--text-hint)';
+  document.getElementById('authLoginForm').style.display = mode === 'login' ? '' : 'none';
+  document.getElementById('authRegisterForm').style.display = mode === 'register' ? '' : 'none';
+  // Clear errors
+  document.getElementById('loginError').style.display = 'none';
+  document.getElementById('regError').style.display = 'none';
+}
+
+function selectRegRole(el) {
+  document.querySelectorAll('#regRoles .role-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function showRegistration() {
+  document.getElementById('regModal').classList.add('show');
+  if (authMode === 'login') {
+    document.getElementById('loginName').focus();
+  } else {
+    document.getElementById('regName').focus();
+  }
+}
+
+function hideRegistration() {
+  document.getElementById('regModal').classList.remove('show');
+}
+
+// ---- Login ----
+async function submitLogin() {
+  const name = document.getElementById('loginName').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+
+  if (!name) { errEl.textContent = '请输入用户名或手机号'; errEl.style.display = ''; return; }
+  if (!password) { errEl.textContent = '请输入密码'; errEl.style.display = ''; return; }
+  errEl.style.display = 'none';
+
+  const btn = document.getElementById('loginSubmitBtn');
+  btn.disabled = true;
+  btn.textContent = '登录中…';
+
+  try {
+    const data = await api('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ name, password }),
+    });
+    const loginData = data.data;
+    if (data.success && loginData && loginData.token) {
+      applyAuthData(loginData);
+      hideRegistration();
+      showToast('欢迎回来，' + loginData.user.name + '！', 'success');
+      loadHomePage();
+    } else {
+      errEl.textContent = data.error || '登录失败，请重试';
+      errEl.style.display = '';
+      btn.disabled = false;
+      btn.textContent = '登录';
+    }
+  } catch (e) {
+    errEl.textContent = e.message || '登录失败';
+    errEl.style.display = '';
+    btn.disabled = false;
+    btn.textContent = '登录';
+  }
+}
+
+// ---- Register ----
+async function submitRegistration() {
+  const name = document.getElementById('regName').value.trim();
+  const phone = document.getElementById('regPhone').value.trim();
+  const password = document.getElementById('regPassword').value;
+  const selectedRole = document.querySelector('#regRoles .role-option.selected');
+  const role = selectedRole ? selectedRole.dataset.role : '';
+  const location = document.getElementById('regLocation').value.trim();
+  const company = document.getElementById('regCompany').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const errEl = document.getElementById('regError');
+
+  if (!name) { errEl.textContent = '请输入用户名'; errEl.style.display = ''; return; }
+  if (!phone) { errEl.textContent = '请输入手机号'; errEl.style.display = ''; return; }
+  if (!/^1[3-9]\d{9}$/.test(phone)) { errEl.textContent = '手机号格式不正确，请输入11位手机号'; errEl.style.display = ''; return; }
+  if (!password || password.length < 6) { errEl.textContent = '密码长度不能少于6位'; errEl.style.display = ''; return; }
+  if (!role) { errEl.textContent = '请选择身份'; errEl.style.display = ''; return; }
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errEl.textContent = '邮箱格式不正确'; errEl.style.display = ''; return; }
+  errEl.style.display = 'none';
+
+  const btn = document.getElementById('regSubmitBtn');
+  btn.disabled = true;
+  btn.textContent = '注册中…';
+
+  try {
+    const data = await api('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ name, role, location, password, phone, email, company }),
+    });
+    if (data.success && data.token) {
+      applyAuthData(data);
+      hideRegistration();
+      showToast('注册成功，欢迎使用再塑通 AI！', 'success');
+      loadHomePage();
+    }
+  } catch (e) {
+    errEl.textContent = e.message || '注册失败，请重试';
+    errEl.style.display = '';
+    btn.disabled = false;
+    btn.textContent = '注册并开始使用';
+  }
+}
+
+function applyAuthData(data) {
+  state.token = data.token;
+  state.userId = data.user.id;
+  state.userName = data.user.name;
+  state.userRole = data.user.role;
+  state.userLocation = data.user.location || '';
+  state.userPhone = data.user.phone || '';
+  state.userEmail = data.user.email || '';
+  state.userCompany = data.user.company || '';
+  saveSession();
+  updateUserUI();
+}
+
+function logout() {
+  state.token = null;
+  state.userId = null;
+  state.userName = '';
+  state.userRole = '';
+  state.userLocation = '';
+  localStorage.removeItem('zs5_session');
+  updateUserUI();
+  showRegistration();
+  showToast('已退出登录', '');
+}
+
+function updateUserUI() {
+  document.getElementById('roleLabel').textContent = state.userName || state.userRole || '未登录';
+  document.getElementById('profileName').textContent = state.userName || '--';
+  document.getElementById('profileRole').textContent = state.userRole || '--';
+  document.getElementById('profileLocation').textContent = state.userLocation || '未设置';
+  // 更新退出按钮
+  const logoutBtn = document.getElementById('profileLogout');
+  if (logoutBtn) {
+    logoutBtn.style.display = isLoggedIn() ? '' : 'none';
+  }
+}
+
+/* ===================================================================
+   SECTION 7: AI PARSING ENGINE
+   =================================================================== */
+const SUPPLY_WORDS = ['出','卖','出售','供应','处理','清仓','现有','有','销','批发','货源','转让'];
+const DEMAND_WORDS  = ['买','求购','急需','采购','要','收','需求','月供','寻','寻找','求','订'];
+
+function aiParse(input, userRole) {
+  if (!input || !input.trim()) return null;
+  let text = input.trim();
+
+  // Step 1: Determine supply vs demand
+  let type = null;
+  let typeScore = 0;
+  for (const w of SUPPLY_WORDS) {
+    if (text.indexOf(w) !== -1) { type = 'supply'; typeScore += w.length + 2; break; }
+  }
+  for (const w of DEMAND_WORDS) {
+    if (text.indexOf(w) !== -1) {
+      const s = w.length + 2;
+      if (s > typeScore) { type = 'demand'; typeScore = s; }
+      break;
+    }
+  }
+  if (!type) {
+    if (userRole === '打包站' || userRole === '再生工厂') type = 'supply';
+    else type = 'demand';
+  }
+
+  // Step 2: Detect waste vs recycled
+  const hasWaste = /破碎|粉碎|瓶砖|膜|桶|泡沫|净片|瓶盖|边角料|废料|废丝|散瓶/.test(text);
+  const hasRecycled = /颗粒|切片|再生粒|改性粒/.test(text);
+
+  // Step 3: Black speech check
+  let materialName = null, materialInfo = null, isWaste = null;
+  const bsKeys = Object.keys(BLACK_SPEECH).sort((a, b) => b.length - a.length);
+  for (const key of bsKeys) {
+    if (text.includes(key)) {
+      const canon = BLACK_SPEECH[key];
+      if (WASTE_TAXONOMY[canon]) { materialName = canon; materialInfo = WASTE_TAXONOMY[canon]; isWaste = true; break; }
+      if (RECYCLED_TAXONOMY[canon]) { materialName = canon; materialInfo = RECYCLED_TAXONOMY[canon]; isWaste = false; break; }
+    }
+  }
+
+  // Step 4: Taxonomy search
+  if (!materialName) {
+    let bestScore = 0;
+    const searchPools = hasRecycled && !hasWaste
+      ? [{ pool: RECYCLED_TAXONOMY, isW: false }, { pool: WASTE_TAXONOMY, isW: true }]
+      : [{ pool: WASTE_TAXONOMY, isW: true }, { pool: RECYCLED_TAXONOMY, isW: false }];
+
+    for (const { pool, isW } of searchPools) {
+      for (const [name, info] of Object.entries(pool)) {
+        let score = 0;
+        for (const kw of info.kw) {
+          if (text.toLowerCase().includes(kw.toLowerCase())) score += kw.length;
+        }
+        if (score > bestScore) { bestScore = score; materialName = name; materialInfo = info; isWaste = isW; }
+      }
+    }
+
+    if (!materialName || bestScore < 2) {
+      const catMatch = text.match(/\b(PET|PP|HDPE|LDPE|LLDPE|ABS|PC|PA66|PA6|PVC|PS|POM|PMMA|PBT|EPS|TPE|HIPS)\b/i);
+      if (catMatch) {
+        const cat = catMatch[0].toUpperCase();
+        const pool = (isWaste === null ? hasWaste || !hasRecycled : isWaste) ? WASTE_TAXONOMY : RECYCLED_TAXONOMY;
+        for (const [name, info] of Object.entries(pool)) {
+          if (info.cat === cat) { materialName = name; materialInfo = info; break; }
+        }
+      }
+    }
+  }
+
+  if (isWaste === null) isWaste = hasWaste || (!hasRecycled);
+
+  // Step 5: Extract quantity
+  let quantity = null;
+  const qtyPatterns = [/(\d+\.?\d*)\s*吨/g, /(\d+\.?\d*)\s*公斤/g, /(\d+\.?\d*)\s*kg/gi];
+  for (const pat of qtyPatterns) {
+    let m; while ((m = pat.exec(text)) !== null) { quantity = parseFloat(m[1]); break; }
+    if (quantity !== null) break;
+  }
+  if (quantity && (/公斤|kg/i).test(text)) quantity = Math.round(quantity / 1000 * 100) / 100;
+
+  // Step 6: Extract price
+  let price = null;
+  const priceMatch = text.match(/(\d{2,5})\s*(?:元[每\/]吨|出|到|块|元)/);
+  if (priceMatch) price = parseInt(priceMatch[1]);
+  else {
+    const bareMatch = text.match(/(\d{3,5})(?:\s*$|\s)/);
+    if (bareMatch && parseInt(bareMatch[1]) >= 100 && parseInt(bareMatch[1]) <= 50000) price = parseInt(bareMatch[1]);
+  }
+
+  // Step 7: Extract location
+  let location = '';
+  const locKeys = Object.keys(LOCATION_MAP).sort((a, b) => b.length - a.length);
+  for (const key of locKeys) {
+    if (text.includes(key)) { location = LOCATION_MAP[key]; break; }
+  }
+
+  return {
+    material: materialName || '未知材料',
+    materialInfo: materialInfo || null,
+    quantity: quantity,
+    price: price,
+    location: location,
+    type: type || 'supply',
+    isWaste: !!isWaste,
+    originalText: text,
+  };
+}
+
+/* ===================================================================
+   SECTION 8: AI INPUT & PUBLISH
+   =================================================================== */
+function quickAction(action) {
+  const prompts = {
+    sell_waste: '我有一批废塑料要出售，',
+    buy_waste: '求购废塑料，',
+    sell_recycled: '我有一批再生颗粒出售，',
+    buy_recycled: '急需采购再生颗粒，',
+  };
+  const textarea = document.getElementById('aiInput');
+  textarea.value = prompts[action] || '';
+  textarea.focus();
+  textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+  showToast('💡 请补充具体品类、数量和地点信息', 'info');
+}
+
+function submitAIInput() {
+  if (!isLoggedIn()) { showRegistration(); return; }
+  const textarea = document.getElementById('aiInput');
+  const text = textarea.value.trim();
+  if (!text) { showToast('请输入供求信息'); return; }
+  processAIInput(text);
+}
+
+async function processAIInput(text) {
+  const loading = document.getElementById('aiLoading');
+  const resultDiv = document.getElementById('aiResult');
+  const sendBtn = document.getElementById('sendBtn');
+
+  loading.classList.add('show');
+  resultDiv.classList.remove('show');
+  resultDiv.innerHTML = '';
+  sendBtn.disabled = true;
+  sendBtn.classList.add('loading');
+  await new Promise(r => setTimeout(r, 600 + Math.random() * 400));
+
+  loading.classList.remove('show');
+  sendBtn.disabled = false;
+  sendBtn.classList.remove('loading');
+
+  const parsed = aiParse(text, state.userRole);
+  if (!parsed || !parsed.material || parsed.material === '未知材料') {
+    resultDiv.innerHTML = `
+      <div class="result-header">⚠️ AI 未能完全识别</div>
+      <div class="result-body">
+        <p style="font-size:13px;color:var(--text-secondary);line-height:1.8">请尝试更具体的描述，AI需要：</p>
+        <p style="font-size:12px;color:var(--text-hint);margin-top:4px">
+          ✅ 材料名称（如"PET三色瓶砖""PP注塑颗粒"）<br>
+          ✅ 数量（如"30吨"）<br>
+          ✅ 价格与地点（可选）
+        </p>
+        <p style="font-size:11px;color:var(--primary);margin-top:6px">💡 试试：30吨PET三色瓶砖 定州 5800出</p>
+      </div>
+      <div class="result-actions">
+        <button class="btn-confirm secondary" onclick="document.getElementById('aiResult').classList.remove('show')">关闭</button>
+        <button class="btn-confirm primary" onclick="document.getElementById('aiInput').value='30吨PET三色瓶砖 定州 5800出';document.getElementById('aiResult').classList.remove('show');submitAIInput();">试试示例</button>
+      </div>`;
+    resultDiv.classList.add('show');
+    return;
+  }
+
+  const typeTag = parsed.type === 'supply'
+    ? '<span class="tag tag-supply">出售</span>'
+    : '<span class="tag tag-demand">求购</span>';
+  const matTag = parsed.isWaste
+    ? '<span class="tag tag-waste">废塑料</span>'
+    : '<span class="tag tag-recycled">再生料</span>';
+
+  let extraInfo = '';
+  if (parsed.materialInfo) {
+    const mi = parsed.materialInfo;
+    extraInfo = `<div class="result-divider"></div>
+      <div class="result-row"><span class="label">分类</span><span class="value" style="font-size:11px;color:var(--text-hint)">${mi.cat} · ${mi.form||''}${mi.grade?' · '+mi.grade:''}</span></div>`;
+  }
+
+  resultDiv.innerHTML = `
+    <div class="result-header"><span class="check-icon">✅</span> AI 解析完成 · 请确认</div>
+    <div class="result-body">
+      <div class="result-row"><span class="label">品类</span><span class="value">${escapeHtml(parsed.material)} ${matTag} ${typeTag}</span></div>
+      <div class="result-row"><span class="label">数量</span><span class="value">${parsed.quantity?escapeHtml(parsed.quantity)+' 吨': '<span style="color:var(--text-hint)">未识别（可手动补充）</span>'}</span></div>
+      <div class="result-row"><span class="label">价格</span><span class="value">${parsed.price?escapeHtml(parsed.price)+' 元/吨': '<span style="color:var(--text-hint)">面议</span>'}</span></div>
+      <div class="result-row"><span class="label">地点</span><span class="value">${escapeHtml(parsed.location)||'<span style="color:var(--text-hint)">未识别</span>'}</span></div>
+      ${extraInfo}
+      <div id="pricingCheckRow" style="margin-top:8px;display:none"></div>
+    </div>
+    <div class="result-actions">
+      <button class="btn-confirm secondary" id="cancelParsedBtn" onclick="cancelParsedResult()">取消</button>
+      <button class="btn-confirm primary" id="confirmPublishBtn" onclick="confirmParsedListing()">✅ 确认发布并智能匹配</button>
+    </div>`;
+  resultDiv.classList.add('show');
+  resultDiv._parsedData = parsed;
+  // Trigger pricing check if price is detected (P0-4)
+  if (parsed.price && parsed.material) {
+    checkPricingSuggestion(parsed.material, parsed.price, parsed.location || state.userLocation || '');
+  }
+}
+
+function cancelParsedResult() {
+  document.getElementById('aiResult').classList.remove('show');
+  document.getElementById('aiInput').value = '';
+}
+
+async function confirmParsedListing() {
+  const resultDiv = document.getElementById('aiResult');
+  const parsed = resultDiv._parsedData;
+  if (!parsed) return;
+
+  const sendBtn = document.getElementById('sendBtn');
+  const confirmBtn = document.getElementById('confirmPublishBtn');
+  const cancelBtn = document.getElementById('cancelParsedBtn');
+  sendBtn.classList.add('loading');
+  sendBtn.disabled = true;
+  if (confirmBtn) confirmBtn.disabled = true;
+
+  const listingData = {
+    userId: state.userId,
+    type: parsed.type,
+    wasteOrRecycled: parsed.isWaste ? '废塑料' : '再生料',
+    material: parsed.material,
+    form: parsed.materialInfo ? parsed.materialInfo.form : (parsed.isWaste ? '破碎' : '颗粒'),
+    quantity: parsed.quantity || 0,
+    price: parsed.price || 0,
+    location: parsed.location || state.userLocation || '',
+    specs: parsed.materialInfo ? (parsed.materialInfo.cat + ' ' + (parsed.materialInfo.grade||'')) : '',
+    notes: parsed.originalText,
+  };
+
+  try {
+    const data = await api('/api/listings', {
+      method: 'POST',
+      body: JSON.stringify(listingData),
+    });
+
+    if (data.success) {
+      // Add to parse history
+      state.parseHistory.push({
+        raw: parsed.originalText,
+        parsed: { material: parsed.material, quantity: parsed.quantity, price: parsed.price, location: parsed.location, type: parsed.type },
+        time: Date.now(),
+      });
+
+      resultDiv.classList.remove('show');
+      document.getElementById('aiInput').value = '';
+      sendBtn.classList.remove('loading');
+      sendBtn.disabled = false;
+      if (confirmBtn) confirmBtn.disabled = false;
+      if (cancelBtn) cancelBtn.disabled = false;
+
+      const matchCount = data.matches ? data.matches.length : 0;
+      showToast('✅ 发布成功！匹配到 ' + matchCount + ' 条潜在交易', 'success');
+
+      // Refresh data
+      await loadHomePage();
+      await loadMatchPage();
+
+      // Navigate to match tab after short delay
+      state._autoNavTimer = setTimeout(() => {
+        if (state.activeTab === 'home') switchTab('match');
+      }, 1200);
+    } else {
+      showToast(data.error || '发布失败，请重试', 'error');
+      if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.classList.remove('loading'); }
+      if (cancelBtn) { cancelBtn.disabled = false; }
+    }
+  } catch (e) {
+    if (e.name !== 'AbortError') showToast('发布失败，请重试', 'error');
+    sendBtn.classList.remove('loading');
+    sendBtn.disabled = false;
+    if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.classList.remove('loading'); }
+    if (cancelBtn) { cancelBtn.disabled = false; }
+  }
+}
+
+/* ===================================================================
+   SECTION 9: PAGE LOADERS
+   =================================================================== */
+async function loadHomePage() {
+  if (!isLoggedIn()) { showRegistration(); return; }
+
+  const el = document.getElementById('homeEmpty');
+  const container = document.getElementById('homeListings');
+
+  // Load stats and recent listings in parallel
+  toggleLoading('homeLoading', true);
+  const [statsRes, listingsRes] = await Promise.all([
+    api('/api/stats').catch(() => null),
+    api('/api/listings').catch(() => null)
+  ]);
+
+  if (statsRes && statsRes.success && statsRes.stats) {
+    state.stats = statsRes.stats;
+    document.getElementById('statSupplies').textContent = statsRes.stats.totalSupplies || 0;
+    document.getElementById('statDemands').textContent = statsRes.stats.totalDemands || 0;
+    document.getElementById('statMatches').textContent = statsRes.stats.totalMatches || 0;
+    document.getElementById('statMatchesSub').textContent = (statsRes.stats.pendingMatches || 0) > 0 ? statsRes.stats.pendingMatches + '条待查看' : '';
+  } else {
+    document.getElementById('statSupplies').textContent = '--';
+    document.getElementById('statDemands').textContent = '--';
+    document.getElementById('statMatches').textContent = '--';
+  }
+
+  try {
+    if (listingsRes && listingsRes.success && listingsRes.listings) {
+      state.listings = listingsRes.listings;
+      const sorted = [...listingsRes.listings].sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+      document.getElementById('homeListingsCount').textContent = sorted.length + '条';
+      if (sorted.length === 0) {
+        container.innerHTML = '';
+        el.style.display = 'flex';
+      } else {
+        el.style.display = 'none';
+        container.innerHTML = sorted.slice(0, 6).map(l => renderListingCard(l, false)).join('');
+      }
+    }
+  } catch (e) {
+    container.innerHTML = '';
+    el.style.display = 'flex';
+  }
+  toggleLoading('homeLoading', false);
+
+  // Load price snapshot
+  loadPriceSnapshot();
+}
+
+async function loadPriceSnapshot() {
+  try {
+    const data = await api('/api/prices');
+    if (data.success && data.prices && data.prices.length > 0) {
+      state.prices = data.prices;
+      const container = document.getElementById('priceSnapshot');
+      if (!container) return;
+      const items = data.prices.slice(0, 8);
+      container.innerHTML = items.map(p => {
+        const trendEmoji = p.trend === 'up' ? '📈' : p.trend === 'down' ? '📉' : '➡️';
+        return `<span style="background:var(--bg);padding:4px 10px;border-radius:20px;white-space:nowrap;font-size:11px">
+          ${trendEmoji} ${escapeHtml(p.material)} <strong>${escapeHtml(p.price_low||p.price_avg)}-${escapeHtml(p.price_high||p.price_avg)}</strong>
+        </span>`;
+      }).join('');
+    }
+  } catch (e) {}
+}
+
+async function loadMatchPage() {
+  if (!isLoggedIn()) return;
+
+  const container = document.getElementById('matchList');
+  const empty = document.getElementById('matchEmpty');
+  const hint = document.getElementById('matchHint');
+  const badge = document.getElementById('matchBadge');
+  const loading = document.getElementById('matchLoading');
+
+  toggleLoading('matchLoading', true);
+  try {
+    const data = await api('/api/matches/' + state.userId);
+    if (data.success) {
+      state.matches = data.matches || [];
+      hint.textContent = '共' + state.matches.length + '条匹配';
+
+      if (state.matches.length > 0) {
+        badge.classList.add('show');
+        badge.textContent = state.matches.length > 99 ? '99+' : state.matches.length;
+      } else {
+        badge.classList.remove('show');
+      }
+
+      applyMatchFilter(data.matches || []);
+    }
+  } catch (e) {
+    state.matches = [];
+    hint.textContent = '加载失败，请下拉重试';
+    container.innerHTML = '';
+    empty.style.display = 'flex';
+    badge.classList.remove('show');
+  }
+  toggleLoading('matchLoading', false);
+}
+
+function applyMatchFilter(matches) {
+  const container = document.getElementById('matchList');
+  const empty = document.getElementById('matchEmpty');
+
+  let filtered = matches || state.matches || [];
+  if (state.matchFilter === 'high') filtered = filtered.filter(m => m.score >= 80);
+  else if (state.matchFilter === 'supply') filtered = filtered.filter(m => m.supply_material);
+  else if (state.matchFilter === 'demand') filtered = filtered.filter(m => m.demand_material);
+
+  if (filtered.length === 0) {
+    container.innerHTML = '';
+    empty.style.display = 'flex';
+  } else {
+    empty.style.display = 'none';
+    container.innerHTML = filtered.map(m => renderMatchCard(m)).join('');
+  }
+}
+
+function filterMatches(filter, el) {
+  state.matchFilter = filter;
+  document.querySelectorAll('#matchFilters .quick-chip').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+  applyMatchFilter(state.matches);
+}
+
+function renderMatchCard(m) {
+  const scoreCls = m.score >= 80 ? 'high' : '';
+  const scorePct = Math.round(m.score);
+  const supplyMat = m.supply_material || '未知';
+  const demandMat = m.demand_material || '未知';
+  const supplyLoc = m.supply_location || '';
+  const demandLoc = m.demand_location || '';
+  const supplyPrice = m.supply_price ? m.supply_price + '元/吨' : '面议';
+  const demandPrice = m.demand_price ? m.demand_price + '元/吨' : '面议';
+
+  return `<div class="listing-card" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="openMatchDetailSheet(${m.id})">
+    <div class="card-top">
+      <span class="material-name">${escapeHtml(supplyMat)} ↔ ${escapeHtml(demandMat)}</span>
+      <div class="badge-row">
+        <span class="badge badge-matched">匹配</span>
+      </div>
+    </div>
+    <div class="card-info">
+      <strong>供:</strong> ${escapeHtml(supplyMat)} · ${escapeHtml(m.supply_quantity||0)}吨 · ${escapeHtml(supplyPrice)}
+      <br><strong>求:</strong> ${escapeHtml(demandMat)} · ${escapeHtml(m.demand_quantity||0)}吨 · ${escapeHtml(demandPrice)}
+    </div>
+    <div class="card-meta">
+      ${supplyLoc ? '<span class="location-tag">📍 '+escapeHtml(supplyLoc)+'</span>' : ''}
+      ${demandLoc ? '<span class="location-tag">📍 '+escapeHtml(demandLoc)+'</span>' : ''}
+    </div>
+    <div class="card-footer">
+      <span>${m.status==='pending'?'待联系':m.status==='contacted'?'已联系':'已成交'} · ${timeAgo(m.created_at)}</span>
+      <span class="score ${scoreCls}">匹配 ${scorePct}%</span>
+    </div>
+  </div>`;
+}
+
+function openMatchDetailSheet(matchId) {
+  const m = (state.matches || []).find(x => x.id === matchId);
+  if (!m) return;
+
+  const scorePct = Math.round(m.score || 0);
+  const scoreColor = scorePct >= 80 ? 'var(--danger)' : scorePct >= 60 ? '#e65100' : 'var(--primary)';
+  const breakdown = m.breakdown || {};
+  const qualityBreakdown = m.qualityBreakdown || {};
+
+  // Build dimension bar HTML
+  const dimLabels = { category: '品类', form: '形态', location: '位置', price: '价格', quantity: '数量', quality: '品质' };
+  const dimColors = ['#059652', '#1989fa', '#ffc300', '#fa5151', '#9c27b0', '#ff6d00'];
+  let dimBarsHTML = '<div class="dim-bars">';
+  let di = 0;
+  for (const [key, label] of Object.entries(dimLabels)) {
+    const val = Math.round((breakdown[key] || 0));
+    const color = dimColors[di % dimColors.length];
+    dimBarsHTML += `<div class="dim-bar-row">
+      <span class="dim-bar-label">${label}</span>
+      <div class="dim-bar-track"><div class="dim-bar-fill" style="width:${val}%;background:${color}"></div></div>
+      <span class="dim-bar-score">${val}%</span>
+    </div>`;
+    di++;
+  }
+  dimBarsHTML += '</div>';
+
+  // Build quality sub-items
+  let qualityHTML = '';
+  if (Object.keys(qualityBreakdown).length > 0) {
+    const qLabels = { colorCompat: '颜色兼容', gradeCompat: '等级兼容', certOverlap: '认证重叠', purityMatch: '纯度匹配' };
+    qualityHTML = '<div class="quality-grid">';
+    for (const [qk, ql] of Object.entries(qLabels)) {
+      const qv = Math.round((qualityBreakdown[qk] || 0));
+      const qCls = qv >= 70 ? 'high' : qv >= 40 ? 'mid' : 'low';
+      qualityHTML += `<div class="quality-item"><div class="q-label">${ql}</div><div class="q-value ${qCls}">${qv}%</div></div>`;
+    }
+    qualityHTML += '</div>';
+  }
+
+  const html = `
+    <h3 class="sheet-title">匹配详情 #${escapeHtml(m.id)}</h3>
+    <div class="score-bar">
+      <span class="score-num" style="color:${scoreColor}">${scorePct}%</span>
+      <span class="score-detail">综合匹配度</span>
+    </div>
+    ${dimBarsHTML}
+    ${qualityHTML ? '<div style="font-size:11px;color:var(--text-hint);margin-top:10px">品质维度细分</div>' + qualityHTML : ''}
+    <div class="info-grid">
+      <div class="info-item"><div class="info-label">供应材料</div><div class="info-value">${escapeHtml(m.supply_material||'--')}</div></div>
+      <div class="info-item"><div class="info-label">求购材料</div><div class="info-value">${escapeHtml(m.demand_material||'--')}</div></div>
+      <div class="info-item"><div class="info-label">供应数量</div><div class="info-value">${escapeHtml(m.supply_quantity||'--')} 吨</div></div>
+      <div class="info-item"><div class="info-label">求购数量</div><div class="info-value">${escapeHtml(m.demand_quantity||'--')} 吨</div></div>
+      <div class="info-item"><div class="info-label">供应价格</div><div class="info-value">${m.supply_price?escapeHtml(m.supply_price)+'元/吨':'面议'}</div></div>
+      <div class="info-item"><div class="info-label">求购价格</div><div class="info-value">${m.demand_price?escapeHtml(m.demand_price)+'元/吨':'面议'}</div></div>
+      <div class="info-item"><div class="info-label">供应地点</div><div class="info-value">${escapeHtml(m.supply_location||'--')}</div></div>
+      <div class="info-item"><div class="info-label">求购地点</div><div class="info-value">${escapeHtml(m.demand_location||'--')}</div></div>
+      <div class="info-item"><div class="info-label">状态</div><div class="info-value">${m.status==='pending'?'待联系':m.status==='contacted'?'已联系':'已成交'}</div></div>
+      <div class="info-item"><div class="info-label">时间</div><div class="info-value">${timeAgo(m.created_at)}</div></div>
+    </div>
+    <div class="sheet-actions">
+      ${m.status === 'pending' ? `<button class="sheet-btn primary" onclick="updateMatchStatus(${m.id},'contacted')">📞 标记已联系</button>` : ''}
+      ${m.status === 'contacted' ? `<button class="sheet-btn primary" onclick="updateMatchStatus(${m.id},'deal')">🤝 标记已成交</button>` : ''}
+      ${isLoggedIn() ? '<button class="sheet-btn" style="background:var(--success);color:#fff;font-weight:600" onclick="initiateDeal(' + matchId + ')">🤝 发起交易</button>' : ''}
+      <button class="sheet-btn primary" style="background:var(--info);color:#fff;font-weight:600" onclick="openChatFromMatch(${matchId});closeSheet()">💬 发消息</button>
+      ${m.supply_user_id !== state.userId ? `<button class="sheet-btn outline" onclick="showEnterprise(${m.supply_user_id});closeSheet()">🏢 供应方名片</button>` : ''}
+      ${m.demand_user_id !== state.userId ? `<button class="sheet-btn outline" onclick="showEnterprise(${m.demand_user_id});closeSheet()">🏢 求购方名片</button>` : ''}
+      <button class="sheet-btn outline" onclick="closeSheet()">关闭</button>
+    </div>`;
+
+  document.getElementById('sheetContent').innerHTML = html;
+  document.getElementById('sheetOverlay').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+async function updateMatchStatus(matchId, status) {
+  try {
+    await api('/api/matches/' + matchId, {
+      method: 'PATCH',
+      body: JSON.stringify({ status })
+    });
+    showToast('✅ 状态已更新', 'success');
+    closeSheet();
+    loadMatchPage();
+  } catch (e) {
+    showToast('状态更新失败，请重试', 'error');
+  }
+}
+
+function openSheet(html) {
+  document.getElementById('sheetContent').innerHTML = html;
+  document.getElementById('sheetOverlay').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function closeSheet(e) {
+  if (e && e.target !== document.getElementById('sheetOverlay')) return;
+  document.getElementById('sheetOverlay').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+/* ===================================================================
+   SECTION 10: MARKET PAGE
+   =================================================================== */
+async function loadMarketPage() {
+  if (state.prices && state._pricesLoadedAt && Date.now() - state._pricesLoadedAt < 60000) {
+    toggleLoading('marketLoading', false);
+    renderMarketContent();
+    return;
+  }
+  const loading = document.getElementById('marketLoading');
+  toggleLoading('marketLoading', true);
+
+  try {
+    const data = await api('/api/prices');
+    if (data.success && data.prices && data.prices.length > 0) {
+      state.prices = data.prices;
+      state._pricesLoadedAt = Date.now();
+      document.getElementById('marketUpdateTime').textContent = '更新于 ' + new Date().toLocaleString('zh-CN');
+      document.getElementById('marketSource').textContent = 'API实时数据';
+    }
+  } catch (e) {
+    document.getElementById('marketUpdateTime').textContent = '使用本地基准数据';
+    document.getElementById('marketSource').textContent = '离线模式';
+  }
+  toggleLoading('marketLoading', false);
+  renderMarketContent();
+
+  // 异步加载图表数据（不阻塞价格列表渲染）
+  loadMarketCharts().catch(() => {});
+}
+
+function switchMarketTab(tab, el) {
+  state.marketTab = tab;
+  document.querySelectorAll('#page-market .quick-filters .quick-chip').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  // Toggle external vs market content
+  const marketContent = document.getElementById('marketContent');
+  const extContent = document.getElementById('externalContent');
+  const priceOv = document.getElementById('priceOverview');
+  const trendCA = document.getElementById('trendChartArea');
+  const heatMA = document.getElementById('heatmapArea');
+  const spreadCard = document.getElementById('spreadCard');
+  const regHeatmap = document.getElementById('regionalHeatmap');
+
+  if (tab === 'external') {
+    if (marketContent) marketContent.style.display = 'none';
+    if (extContent) extContent.style.display = '';
+    document.getElementById('marketUpdateTime').style.display = 'none';
+    document.getElementById('marketSource').style.display = 'none';
+    if (priceOv) priceOv.style.display = 'none';
+    if (trendCA) trendCA.style.display = 'none';
+    if (heatMA) heatMA.style.display = 'none';
+    if (spreadCard) spreadCard.style.display = 'none';
+    if (regHeatmap) regHeatmap.style.display = 'none';
+    loadExternalListings();
+  } else {
+    if (marketContent) marketContent.style.display = '';
+    if (extContent) extContent.style.display = 'none';
+    document.getElementById('marketUpdateTime').style.display = '';
+    document.getElementById('marketSource').style.display = '';
+    if (state._chartsLoaded) {
+      if (priceOv && priceOv.innerHTML.trim()) priceOv.style.display = '';
+      if (trendCA && trendCA.innerHTML.trim()) trendCA.style.display = '';
+      if (heatMA && heatMA.innerHTML.trim()) heatMA.style.display = '';
+      if (spreadCard && spreadCard.style.display !== 'none') spreadCard.style.display = '';
+      if (regHeatmap && regHeatmap.style.display !== 'none') regHeatmap.style.display = '';
+    }
+    renderMarketContent();
+  }
+}
+
+function renderMarketContent() {
+  const container = document.getElementById('marketContent');
+  const empty = document.getElementById('marketEmpty');
+  let data;
+
+  if (state.prices && state.prices.length > 0) {
+    // Build from API data
+    const wastePrices = state.prices.filter(p => ['PET','PP','HDPE','LDPE','LLDPE','ABS','PC','PA','PVC','PS','POM','PMMA','EPS','TPE','EVA'].includes(p.category||''));
+    const recycledPrices = state.prices.filter(p => (p.material||'').includes('颗粒') || (p.material||'').includes('切片'));
+
+    data = state.marketTab === 'waste'
+      ? (wastePrices.length > 0 ? [{
+          cat: 'API实时价格', icon: '📊',
+          items: wastePrices.map(p => ({ n: p.material, l: p.price_low||p.price_avg, h: p.price_high||p.price_avg, t: p.trend||'flat', c: (p.change_pct? (p.change_pct>0?'+':'')+p.change_pct+'%':'0%') }))
+        }] : WASTE_MARKET_DEFAULT)
+      : (recycledPrices.length > 0 ? [{
+          cat: 'API实时价格', icon: '📊',
+          items: recycledPrices.map(p => ({ n: p.material, l: p.price_low||p.price_avg, h: p.price_high||p.price_avg, t: p.trend||'flat', c: (p.change_pct? (p.change_pct>0?'+':'')+p.change_pct+'%':'0%') }))
+        }] : RECYCLED_MARKET_DEFAULT);
+  } else {
+    data = state.marketTab === 'waste' ? WASTE_MARKET_DEFAULT : RECYCLED_MARKET_DEFAULT;
+  }
+
+  if (!data || data.length === 0) {
+    container.innerHTML = '';
+    empty.style.display = 'flex';
+    return;
+  }
+  empty.style.display = 'none';
+
+  container.innerHTML = data.map(group => `
+    <div class="market-group">
+      <div class="group-header">
+        <span class="icon">${group.icon}</span>${group.cat}
+      </div>
+      ${group.items.map(item => {
+        const trendEmoji = item.t === 'up' ? '📈' : item.t === 'down' ? '📉' : '➡️';
+        const trendCls = item.t === 'up' ? 'trend-up' : item.t === 'down' ? 'trend-down' : 'trend-flat';
+        return `<div class="market-row">
+          <span class="material-name">${escapeHtml(item.n)}</span>
+          <span class="price-range">${escapeHtml(item.l)}-${escapeHtml(item.h)}</span>
+          <span class="trend ${trendCls}">${trendEmoji} ${escapeHtml(item.c)}</span>
+        </div>`;
+      }).join('')}
+    </div>
+  `).join('');
+}
+
+/* ===================================================================
+   SECTION 11: PROFILE PAGE
+   =================================================================== */
+async function loadProfilePage() {
+  if (!isLoggedIn()) { showRegistration(); return; }
+  updateUserUI();
+  renderMyListings();
+  renderParseHistory();
+  // Show enterprise card entry for logged-in users
+  const entSec = document.getElementById('profileEntSection');
+  if (entSec) entSec.style.display = '';
+}
+
+async function renderMyListings() {
+  const container = document.getElementById('myListings');
+  const empty = document.getElementById('myListingsEmpty');
+  toggleLoading('profileLoading', true);
+
+  try {
+    const data = await api('/api/listings?userId=' + state.userId);
+    if (data.success && data.listings) {
+      state.listings = [...(state.listings||[]), ...data.listings.filter(l => !state.listings.find(x=>x.id===l.id))];
+      if (data.listings.length === 0) {
+        container.innerHTML = '';
+        empty.style.display = 'flex';
+      } else {
+        empty.style.display = 'none';
+        container.innerHTML = data.listings.map(l => {
+          return `<div style="position:relative">
+            ${renderListingCard(l, false)}
+            <button style="position:absolute;top:8px;right:8px;width:44px;height:44px;border-radius:50%;background:var(--danger-light);color:var(--danger);font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:5;padding:0"
+              onclick="event.stopPropagation();deleteListing(${l.id})" title="删除">×</button>
+          </div>`;
+        }).join('');
+      }
+    }
+  } catch (e) {
+    container.innerHTML = '';
+    empty.style.display = 'flex';
+  }
+  toggleLoading('profileLoading', false);
+}
+
+function renderParseHistory() {
+  const container = document.getElementById('parseHistory');
+  const empty = document.getElementById('parseHistoryEmpty');
+  if (!state.parseHistory || state.parseHistory.length === 0) {
+    container.innerHTML = '';
+    empty.style.display = 'flex';
+  } else {
+    empty.style.display = 'none';
+    container.innerHTML = state.parseHistory.slice().reverse().map(h => `
+      <div class="history-item">
+        <div class="raw">${escapeHtml(h.raw)}</div>
+        <div class="parsed">
+          <span class="arrow">→</span> <span>${escapeHtml(h.parsed.material)}</span>
+          ${h.parsed.quantity?`<span class="arrow">·</span> <span>${escapeHtml(h.parsed.quantity)}吨</span>`:''}
+          ${h.parsed.price?`<span class="arrow">·</span> <span>${escapeHtml(h.parsed.price)}元/吨</span>`:''}
+          ${h.parsed.location?`<span class="arrow">·</span> <span>${escapeHtml(h.parsed.location)}</span>`:''}
+          <span class="arrow">·</span>
+          <span style="color:${h.parsed.type==='supply'?'#e65100':'#0d47a1'}">${h.parsed.type==='supply'?'出售':'求购'}</span>
+        </div>
+      </div>`).join('');
+  }
+}
+
+async function deleteListing(id) {
+  if (!confirm('确定删除这条发布？')) return;
+  try {
+    await api('/api/listings/' + id, { method: 'PATCH', body: JSON.stringify({ status: 'closed' }) });
+    showToast('✅ 已删除', 'success');
+    loadProfilePage();
+    loadHomePage();
+  } catch (e) {
+    showToast('删除失败，请重试', 'error');
+  }
+}
+
+function switchRole() {
+  const roles = ['打包站', '再生工厂', '制品·改性·色母', '贸易商'];
+  const idx = roles.indexOf(state.userRole);
+  const next = roles[(idx + 1) % roles.length];
+  state.userRole = next;
+  saveSession();
+  updateUserUI();
+  showToast('🔄 身份已切换为：' + state.userRole, 'success');
+}
+
+function showProfile() {
+  if (!isLoggedIn()) { showRegistration(); return; }
+  switchTab('me');
+}
+
+/* ===================================================================
+   SECTION 19c: DEAL TRACKING — 交易流程追踪
+   =================================================================== */
+
+const DEAL_STATUS_LABELS = { intent: '意向确认', negotiating: '洽谈中', deal: '已成交', completed: '已完成', cancelled: '已取消' };
+const DEAL_FLOW = ['intent', 'negotiating', 'deal', 'completed'];
+let _dealStatusFilter = '';
+
+async function loadDealsPage() {
+  toggleLoading('dealsLoading', true);
+  document.getElementById('dealList').innerHTML = '';
+  document.getElementById('dealEmpty').style.display = 'none';
+  try {
+    const status = _dealStatusFilter ? '&status=' + _dealStatusFilter : '';
+    const res = await api('/api/deal-intents?limit=50' + status);
+    if (res.success) {
+      renderDealList(res.deals);
+      if (res.deals.length === 0) document.getElementById('dealEmpty').style.display = '';
+    }
+  } catch (e) {
+    document.getElementById('dealEmpty').style.display = '';
+  }
+  toggleLoading('dealsLoading', false);
+}
+
+function filterDealStatus(status) {
+  _dealStatusFilter = status;
+  document.querySelectorAll('#dealTabBar .dt').forEach(t => t.classList.toggle('active', t.dataset.status === status));
+  loadDealsPage();
+}
+
+function renderDealList(deals) {
+  const container = document.getElementById('dealList');
+  if (!deals.length) { container.innerHTML = ''; return; }
+  container.innerHTML = deals.map(d => {
+    const supplyMat = d.supply_material || '—';
+    const demandMat = d.demand_material || '—';
+    const priceText = d.price_agreed ? '¥' + d.price_agreed + '/吨' : (d.supply_price ? '¥' + d.supply_price + '/吨' : '价格待定');
+    const qtyText = d.quantity_agreed ? d.quantity_agreed + '吨' : (d.supply_quantity ? d.supply_quantity + '吨' : '');
+    const statusLabel = DEAL_STATUS_LABELS[d.status] || d.status;
+    const isActive = !['completed', 'cancelled'].includes(d.status);
+    const counterparty = (d.initiator_id === state.userId) ? (d.counterparty_name || '对方') : (d.initiator_name || '对方');
+    return '<div class="deal-card">' +
+      '<div class="deal-header"><span class="deal-material">' + escapeHtml(supplyMat) + ' ⇄ ' + escapeHtml(demandMat) + '</span>' +
+      '<span class="deal-status ' + d.status + '">' + statusLabel + '</span></div>' +
+      '<div class="deal-meta"><span>' + counterparty + '</span><span>' + priceText + '</span><span>' + qtyText + '</span>' +
+      (d.match_score ? '<span>匹配 ' + d.match_score + '%</span>' : '') + '</div>' +
+      (d.note ? '<div style="font-size:12px;color:var(--text-hint);margin-top:4px">' + escapeHtml(d.note) + '</div>' : '') +
+      (isActive ? '<div class="deal-actions">' +
+        (d.status === 'intent' ? '<button class="primary" onclick="updateDealStatus(' + d.id + ',\'negotiating\')">进入洽谈</button><button class="danger" onclick="updateDealStatus(' + d.id + ',\'cancelled\')">取消</button>' :
+         d.status === 'negotiating' ? '<button class="primary" onclick="updateDealStatus(' + d.id + ',\'deal\')">确认成交</button><button class="danger" onclick="updateDealStatus(' + d.id + ',\'cancelled\')">取消</button>' :
+         d.status === 'deal' ? '<button class="primary" onclick="updateDealStatus(' + d.id + ',\'completed\')">标记完成</button>' : '') +
+        '<button class="outline" onclick="startChatFromDeal(' + d.id + ',' + (d.initiator_id === state.userId ? d.counterparty_id : d.initiator_id) + ')">💬 联系对方</button>' +
+      '</div>' : '') + '</div>';
+  }).join('');
+}
+
+async function initiateDeal(matchId) {
+  if (!isLoggedIn()) { showToast('请先登录', 'error'); return; }
+  try {
+    const res = await api('/api/deal-intents', { method: 'POST', body: JSON.stringify({ match_id: matchId }) });
+    if (res.success) { showToast('交易意向已发起', 'success'); if (typeof closeSheet === 'function') closeSheet(); }
+    else showToast(res.error || '发起失败', 'error');
+  } catch (e) { showToast('网络错误', 'error'); }
+}
+
+async function updateDealStatus(dealId, status) {
+  try {
+    const res = await api('/api/deal-intents/' + dealId, { method: 'PATCH', body: JSON.stringify({ status }) });
+    if (res.success) { showToast('状态已更新', 'success'); loadDealsPage(); }
+    else showToast(res.error || '更新失败', 'error');
+  } catch (e) { showToast('网络错误', 'error'); }
+}
+
+async function startChatFromDeal(dealId, targetUserId) {
+  if (!isLoggedIn()) { showToast('请先登录', 'error'); return; }
+  if (!targetUserId) return;
+  try {
+    const res = await api('/api/messages/conversations', { method: 'POST', body: JSON.stringify({ participant_id: targetUserId }) });
+    if (res.success) {
+      state._chatConversationId = res.conversationId;
+      state._chatTargetUser = targetUserId;
+      state._entReturnTab = 'deals';
+      switchTab('chat');
+    }
+  } catch (e) {}
+}
+
+async function loadDealBadge() {
+  if (!isLoggedIn()) return;
+  try {
+    const res = await api('/api/deal-intents?status=intent&limit=1');
+    const badge = document.getElementById('dealBadge');
+    if (badge) badge.classList.toggle('show', res.deals && res.deals.length > 0);
+  } catch (e) {}
+}
+
+/* ===================================================================
+   SECTION 20: ENTERPRISE — 企业名片 (Profile + Samples + Evaluations)
+   =================================================================== */
+function showEnterprise(userId, returnTab) {
+  state._entUserId = userId;
+  state._entReturnTab = returnTab || state.activeTab;
+  switchTab('enterprise');
+}
+
+async function loadEnterpriseProfile(userId) {
+  const id = userId || state._entUserId;
+  if (!id) return;
+
+  document.getElementById('entLoading').style.display = 'flex';
+  document.getElementById('entProfileCard').style.display = 'none';
+  document.getElementById('entEvalSection').style.display = 'none';
+  document.getElementById('entSampleSection').style.display = 'none';
+  document.getElementById('entEvalListSection').style.display = 'none';
+
+  try {
+    const data = await api('/api/enterprise/profile/' + id);
+    if (data.success && data.profile) {
+      renderEnterprisePage(data.profile);
+      // Check if viewing own profile
+      if (isLoggedIn() && (state.user.id === id || state.userId === id)) {
+        document.getElementById('entEditBtn').style.display = '';
+      }
+    }
+  } catch (e) {
+    showToast('加载企业信息失败', 'error');
+  }
+  document.getElementById('entLoading').style.display = 'none';
+}
+
+function renderEnterprisePage(p) {
+  // Profile
+  document.getElementById('entProfileCard').style.display = '';
+  document.getElementById('entAvatar').textContent = p.avatar_url ? '🏭' : '🏢';
+  document.getElementById('entName').textContent = p.company || p.name || '未设置';
+  const roleMap = { '打包站':'📦 打包站','再生工厂':'🏭 再生工厂','制品·改性·色母':'🎨 制品/改性','贸易商':'🤝 贸易商' };
+  document.getElementById('entRole').textContent = (p.dual_roles && p.dual_roles.length > 0 ? p.dual_roles : [p.role || '']).map(r => roleMap[r] || r).join(' · ');
+
+  // Badges
+  const badges = [];
+  if (p.process_type) badges.push(p.process_type);
+  if (p.business_scope) badges.push(p.business_scope);
+  document.getElementById('entBadges').innerHTML = badges.map(b => `<span class="ent-badge">${escapeHtml(b)}</span>`).join('');
+
+  // Stats
+  const evalStats = p.evaluation || {};
+  document.getElementById('entStats').innerHTML = `
+    <div class="ent-stat"><div class="stat-num">${evalStats.total || 0}</div><div class="stat-label">评价数</div></div>
+    <div class="ent-stat"><div class="stat-num">${(p.samples||[]).length}</div><div class="stat-label">样本</div></div>
+    <div class="ent-stat"><div class="stat-num">${p.capacity || '--'}</div><div class="stat-label">产能(吨)</div></div>
+  `;
+
+  // Meta
+  const metaLines = [];
+  if (p.location) metaLines.push(`📍 ${escapeHtml(p.location)}`);
+  if (p.established_year) metaLines.push(`📅 成立于 ${p.established_year} 年`);
+  if (p.employee_count) metaLines.push(`👥 ${p.employee_count} 人`);
+  document.getElementById('entMeta').innerHTML = metaLines.map(l => `<div>${l}</div>`).join('');
+
+  // Certifications
+  const certs = p.certifications || [];
+  document.getElementById('entCerts').innerHTML = certs.map(c => `<span class="cert-tag">✓ ${escapeHtml(c)}</span>`).join('');
+
+  // Evaluation summary bars
+  if (evalStats.total > 0) {
+    document.getElementById('entEvalSection').style.display = '';
+    document.getElementById('entEvalSummary').innerHTML = `
+      <div class="eval-bar"><span class="eval-label">品质</span><div class="eval-track"><div class="eval-fill" style="width:${(evalStats.avg_quality||5)*20}%"></div></div><span class="eval-score">${evalStats.avg_quality||'--'}</span></div>
+      <div class="eval-bar"><span class="eval-label">诚信</span><div class="eval-track"><div class="eval-fill" style="width:${(evalStats.avg_integrity||5)*20}%"></div></div><span class="eval-score">${evalStats.avg_integrity||'--'}</span></div>
+      <div class="eval-bar"><span class="eval-label">效率</span><div class="eval-track"><div class="eval-fill" style="width:${(evalStats.avg_speed||5)*20}%"></div></div><span class="eval-score">${evalStats.avg_speed||'--'}</span></div>
+    `;
+  }
+
+  // Sample wall
+  const samples = p.samples || [];
+  if (samples.length > 0) {
+    document.getElementById('entSampleSection').style.display = '';
+    document.getElementById('entSampleGrid').innerHTML = samples.map(s => {
+      const imgs = (s.spec_image_urls || []).filter(u => u);
+      return `
+        <div class="sample-card">
+          <div class="sample-title">${escapeHtml(s.title)}</div>
+          <div class="sample-meta">${escapeHtml(s.category)}${s.form ? ' · ' + escapeHtml(s.form) : ''}</div>
+          ${s.price ? `<div class="sample-meta" style="color:var(--danger)">¥${s.price}/吨</div>` : ''}
+          ${imgs.length ? `<div class="sample-imgs">${imgs.map(u => `<img src="${escapeHtml(u)}" alt="sample" loading="lazy" onerror="this.style.display='none'">`).join('')}</div>` : ''}
+        </div>`;
+    }).join('');
+  }
+
+  // Load evaluation list
+  loadEnterpriseEvaluations(state._entUserId);
+}
+
+async function loadEnterpriseEvaluations(userId) {
+  try {
+    const data = await api('/api/enterprise/evaluations/' + userId);
+    if (data.success && data.evaluations && data.evaluations.length > 0) {
+      document.getElementById('entEvalListSection').style.display = '';
+      document.getElementById('entEvalEmpty').style.display = 'none';
+      document.getElementById('entEvalList').innerHTML = data.evaluations.map(ev => `
+        <div class="eval-list-item">
+          <div class="eval-reviewer">
+            <div class="r-avatar">${(ev.reviewer_name||'?')[0]}</div>
+            <span>${escapeHtml(ev.reviewer_name || '匿名')}</span>
+          </div>
+          <div class="eval-stars">
+            <span>品质${'★'.repeat(ev.rating_quality||5)}</span>
+            <span>诚信${'★'.repeat(ev.rating_integrity||5)}</span>
+            <span>效率${'★'.repeat(ev.rating_speed||5)}</span>
+          </div>
+          ${ev.comment ? `<div class="eval-comment">${escapeHtml(ev.comment)}</div>` : ''}
+          <div class="eval-time">${(ev.created_at||'').slice(0,10)}</div>
+        </div>
+      `).join('');
+    } else {
+      document.getElementById('entEvalEmpty').style.display = 'flex';
+      document.getElementById('entEvalList').innerHTML = '';
+    }
+  } catch (e) {
+    document.getElementById('entEvalEmpty').style.display = 'flex';
+    document.getElementById('entEvalList').innerHTML = '';
+  }
+}
+
+function startChatFromEnt() {
+  const userId = state._entUserId;
+  if (!userId) return;
+  if (!isLoggedIn()) { showRegistration(); return; }
+  // Find or create conversation with this user
+  (async () => {
+    try {
+      const data = await api('/api/messages/conversations', { method: 'POST', body: JSON.stringify({ participantId: userId }) });
+      if (data.success && data.conversation) {
+        openChat(data.conversation.id);
+      }
+    } catch (e) {
+      // Try to open chat directly with userId as chat target
+      openChat(userId);
+    }
+  })();
+}
+
+function editEnterpriseProfile() {
+  // Simple inline edit — could be expanded with a modal
+  const p = state._entCache;
+  if (!p) return;
+  const newLoc = prompt('地区', p.location || '');
+  const newCap = prompt('产能(吨/年)', p.capacity || '');
+  const newScope = prompt('业务范围', p.business_scope || '');
+  if (newLoc === null && newCap === null && newScope === null) return;
+
+  (async () => {
+    try {
+      const body = { userId: state.userId || state.user.id };
+      if (newLoc !== null) body.location = newLoc;
+      if (newCap !== null) body.capacity = parseInt(newCap) || 0;
+      if (newScope !== null) body.businessScope = newScope;
+      await api('/api/enterprise/profile', { method: 'PATCH', body: JSON.stringify(body) });
+      showToast('✅ 档案已更新', 'success');
+      loadEnterpriseProfile();
+    } catch (e) {
+      showToast('更新失败', 'error');
+    }
+  })();
+}
+
+/* ===================================================================
+   SECTION 12: LISTING CARD RENDERER
+   =================================================================== */
+function renderListingCard(l, showScore) {
+  const typeBadge = l.type === 'supply'
+    ? '<span class="badge badge-supply">出售</span>'
+    : '<span class="badge badge-demand">求购</span>';
+  const wasteBadge = l.waste_or_recycled === '废塑料'
+    ? '<span class="badge" style="background:#fce4ec;color:#880e4f">废塑料</span>'
+    : (l.waste_or_recycled === '再生料' ? '<span class="badge" style="background:#e8f5e9;color:#1b5e20">再生料</span>' : '');
+
+  const qtyStr = l.quantity ? `<strong>${escapeHtml(l.quantity)}吨</strong>` : '';
+  const priceStr = l.price ? `<strong>${escapeHtml(l.price)}元/吨</strong>` : '<span style="color:var(--text-hint)">价格面议</span>';
+  const locStr = l.location ? `<span class="location-tag">📍 ${escapeHtml(l.location)}</span>` : '';
+
+  let scoreHTML = '';
+  if (showScore && l.score !== undefined) {
+    const cls = l.score >= 80 ? 'high' : '';
+    scoreHTML = `<span class="score ${cls}">匹配 ${Math.round(l.score)}%</span>`;
+  }
+
+  return `
+    <div class="listing-card" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="viewListingDetail(${l.id})">
+      <div class="card-top">
+        <span class="material-name">${escapeHtml(l.material || '未知材料')}</span>
+        <div class="badge-row">${typeBadge}${wasteBadge}</div>
+      </div>
+      <div class="card-info">${qtyStr} ${priceStr}</div>
+      <div class="card-meta">${locStr}</div>
+      <div class="card-footer">
+        <span>${timeAgo(l.created_at)}${l.user_name ? ` · <span style="color:var(--primary);cursor:pointer" onclick="event.stopPropagation();showEnterprise(${l.user_id})">${escapeHtml(l.user_name)}</span>` : ''}</span>
+        <span style="display:flex;align-items:center;gap:8px">
+          ${l.user_id !== state.userId ? `<button class="sheet-btn primary" style="font-size:11px;padding:3px 10px;margin:0" onclick="event.stopPropagation();openChatFromListing(${l.id})">💬 联系</button>` : ''}
+          ${scoreHTML}
+        </span>
+      </div>
+    </div>`;
+}
+
+function viewListingDetail(id) {
+  const l = state.listings.find(x => x.id === id);
+  if (!l) return;
+
+  const html = `
+    <h3 class="sheet-title">${escapeHtml(l.material || '未知材料')}</h3>
+    <div class="info-grid">
+      <div class="info-item"><div class="info-label">类型</div><div class="info-value">${l.type==='supply'?'出售':'求购'}</div></div>
+      <div class="info-item"><div class="info-label">分类</div><div class="info-value">${escapeHtml(l.waste_or_recycled||'--')}</div></div>
+      <div class="info-item"><div class="info-label">数量</div><div class="info-value">${escapeHtml(l.quantity||'--')} 吨</div></div>
+      <div class="info-item"><div class="info-label">价格</div><div class="info-value">${l.price?escapeHtml(l.price)+'元/吨':'面议'}</div></div>
+      <div class="info-item"><div class="info-label">形态</div><div class="info-value">${escapeHtml(l.form||'--')}</div></div>
+      <div class="info-item"><div class="info-label">地点</div><div class="info-value">${escapeHtml(l.location||'--')}</div></div>
+      <div class="info-item"><div class="info-label">规格</div><div class="info-value">${escapeHtml(l.specs||'--')}</div></div>
+      <div class="info-item"><div class="info-label">发布时间</div><div class="info-value">${timeAgo(l.created_at)}</div></div>
+    </div>
+    ${l.notes?`<div style="margin-top:12px;padding:10px;background:var(--bg);border-radius:var(--radius-sm);font-size:12px;color:var(--text-secondary)">📝 ${escapeHtml(l.notes)}</div>`:''}
+    <div class="sheet-actions">
+      ${l.user_id !== state.userId ? `<button class="sheet-btn primary" onclick="openChatFromListing(${l.id});closeSheet()">💬 联系${l.type==='supply'?'卖家':'买家'}：${escapeHtml(l.user_name||'')}</button>
+      <button class="sheet-btn outline" onclick="showEnterprise(${l.user_id});closeSheet()">🏢 企业名片</button>` : ''}
+      <button class="sheet-btn outline" onclick="closeSheet()">关闭</button>
+    </div>`;
+openSheet(html);
+}
+
+/* ===================================================================
+   SECTION 13: PULL-TO-REFRESH
+   =================================================================== */
+let ptrTouchStart = 0;
+let ptrPulling = false;
+
+function setupPullToRefresh() {
+  document.addEventListener('touchstart', function(e) {
+    if (e.target.closest('.sheet') || e.target.closest('.modal-box')) return;
+    ptrTouchStart = e.touches[0].clientY;
+    ptrPulling = false;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', function(e) {
+    if (e.target.closest('.sheet') || e.target.closest('.modal-box')) return;
+    const currentY = e.touches[0].clientY;
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    if (scrollTop <= 0 && currentY - ptrTouchStart > 40 && !ptrPulling) {
+      ptrPulling = true;
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchend', function(e) {
+    if (ptrPulling) {
+      ptrPulling = false;
+      // Pull-to-refresh disabled for now - remove broken logic
+      // This was checking a non-existent element
+      if (state.activeTab === 'match') {
+        loadMatchPage();
+      } else if (state.activeTab === 'home') {
+        loadHomePage();
+      }
+    }
+  });
+}
+
+
+/* ===================================================================
+   SECTION 15: VISION — Image Recognition (P0-1)
+   =================================================================== */
+let _visionImageData = null;
+let _visionResult = null;
+
+function handleVisionImage(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.size > 10 * 1024 * 1024) { showToast('图片大小不能超过10MB', 'error'); return; }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    _visionImageData = e.target.result;
+    document.getElementById('visionPreviewImg').src = _visionImageData;
+    document.getElementById('visionUploadArea').style.display = 'none';
+    document.getElementById('visionPreview').style.display = '';
+    document.getElementById('visionAnalyzeBtn').style.display = '';
+    document.getElementById('visionResult').classList.remove('show');
+    _visionResult = null;
+  };
+  reader.readAsDataURL(file);
+}
+
+function resetVision() {
+  _visionImageData = null;
+  _visionResult = null;
+  document.getElementById('visionFileInput').value = '';
+  document.getElementById('visionUploadArea').style.display = '';
+  document.getElementById('visionPreview').style.display = 'none';
+  document.getElementById('visionAnalyzeBtn').style.display = 'none';
+  document.getElementById('visionResult').classList.remove('show');
+  document.getElementById('visionLoading').classList.remove('show');
+}
+
+async function analyzeVisionImage() {
+  if (!_visionImageData) { showToast('请先选择图片', 'error'); return; }
+
+  const loading = document.getElementById('visionLoading');
+  const resultCard = document.getElementById('visionResult');
+  const btn = document.getElementById('visionAnalyzeBtn');
+
+  loading.classList.add('show');
+  resultCard.classList.remove('show');
+  btn.disabled = true;
+
+  try {
+    // Convert data URL to blob
+    const resp = await fetch(_visionImageData);
+    const blob = await resp.blob();
+    const formData = new FormData();
+    formData.append('image', blob, 'plastic.jpg');
+
+    const data = await api('/api/vision/analyze', {
+      method: 'POST',
+      body: formData,
+      headers: {} // Let browser set Content-Type for FormData
+    });
+
+    loading.classList.remove('show');
+    btn.disabled = false;
+
+    if (data.success) {
+      _visionResult = data;
+      renderVisionResult(data);
+      // Save to local history
+      if (!state._visionHistory) state._visionHistory = [];
+      state._visionHistory.unshift({
+        material: data.material || '未知',
+        color: data.color || '未知',
+        form: data.form || '未知',
+        purity: data.purity || 0,
+        confidence: data.confidence || 0,
+        time: Date.now()
+      });
+      if (state._visionHistory.length > 20) state._visionHistory = state._visionHistory.slice(0, 20);
+    } else {
+      showToast(data.error || '识别失败，请重试', 'error');
+    }
+  } catch (e) {
+    loading.classList.remove('show');
+    btn.disabled = false;
+    showToast('识别失败: ' + (e.message || '网络错误'), 'error');
+  }
+}
+
+function renderVisionResult(data) {
+  const body = document.getElementById('visionResultBody');
+  const confPct = data.confidence ? Math.round(data.confidence) : 0;
+  const confStr = confPct >= 70 ? '高' : confPct >= 40 ? '中' : '低';
+  const confColor = confPct >= 70 ? 'var(--primary)' : confPct >= 40 ? '#e65100' : 'var(--text-hint)';
+
+  body.innerHTML = `
+    <div class="result-row"><span class="label">品类</span><span class="value">${escapeHtml(data.material || '未知')}</span><span class="conf" style="color:${confColor}">置信度 ${confPct}% (${confStr})</span></div>
+    <div class="result-row"><span class="label">颜色</span><span class="value">${escapeHtml(data.color || '未知')}</span></div>
+    <div class="result-row"><span class="label">形态</span><span class="value">${escapeHtml(data.form || '未知')}</span></div>
+    <div class="result-row"><span class="label">纯度</span><span class="value">${data.purity ? data.purity + '%' : '未知'}</span></div>
+    ${data.notes ? '<div style="padding:8px;background:var(--bg);border-radius:4px;margin-top:8px;font-size:12px;color:var(--text-secondary)">📝 ' + escapeHtml(data.notes) + '</div>' : ''}
+  `;
+  document.getElementById('visionResult').classList.add('show');
+}
+
+function fillFormFromVision() {
+  if (!_visionResult || !_visionResult.success) { showToast('无识别结果', 'error'); return; }
+
+  const data = _visionResult;
+  const materialText = [
+    data.material || '',
+    data.color || '',
+    data.form || ''
+  ].filter(Boolean).join(' ');
+
+  // Navigate to home and fill the input
+  switchTab('home');
+  const aiInput = document.getElementById('aiInput');
+  aiInput.value = '我有' + materialText + (data.purity ? ' 纯度' + data.purity + '%' : '');
+  aiInput.focus();
+
+  // Optionally auto-submit
+  showToast('✅ 已填充到发布框，确认后点击发送', 'success');
+}
+
+function loadVisionHistory() {
+  if (!state._visionHistory || state._visionHistory.length === 0) {
+    document.getElementById('visionHistory').innerHTML = '';
+    document.getElementById('visionHistoryEmpty').style.display = 'flex';
+    return;
+  }
+  document.getElementById('visionHistoryEmpty').style.display = 'none';
+  document.getElementById('visionHistory').innerHTML = state._visionHistory.map(h => `
+    <div class="history-item">
+      <div class="raw">📷 ${escapeHtml(h.material)} · ${escapeHtml(h.color)}</div>
+      <div class="parsed">
+        <span>${escapeHtml(h.material)}</span>
+        <span class="arrow">·</span> <span>${escapeHtml(h.form||'未知')}</span>
+        <span class="arrow">·</span> <span style="color:var(--primary)">纯度${h.purity||'?'}%</span>
+        <span class="arrow">·</span> <span style="color:var(--text-hint)">${timeAgo(new Date(h.time).toISOString())}</span>
+      </div>
+    </div>`).join('');
+}
+
+
+/* ===================================================================
+   SECTION 16: PRICING — AI Price Check (P0-4)
+   =================================================================== */
+async function checkPricingSuggestion(material, price, location) {
+  const row = document.getElementById('pricingCheckRow');
+  if (!row) return;
+
+  row.style.display = '';
+  row.innerHTML = '<div style="font-size:12px;color:var(--text-hint);padding:8px 0">🔍 正在检测报价合理性…</div>';
+
+  try {
+    const params = new URLSearchParams({
+      material: material,
+      price: price,
+      location: location || state.userLocation || ''
+    });
+    const data = await api('/api/pricing/check?' + params.toString());
+
+    if (data.success && data.suggestion) {
+      const s = data.suggestion;
+      let warnHtml = '';
+      const devPct = Math.abs(s.deviation || 0);
+      if (devPct > 30) {
+        warnHtml = '<div class="price-warn overpriced">⚠️ 报价严重偏离基准价' + (s.deviation > 0 ? '偏高' : '偏低') + devPct.toFixed(0) + '%</div>';
+      } else if (devPct > 15) {
+        warnHtml = '<div class="price-warn ' + (s.deviation > 0 ? 'overpriced' : 'underpriced') + '">⚡ 报价' + (s.deviation > 0 ? '偏高' : '偏低') + devPct.toFixed(0) + '%，建议调整</div>';
+      } else {
+        warnHtml = '<div class="price-warn reasonable">✅ 报价在合理区间内 (±' + devPct.toFixed(0) + '%)</div>';
+      }
+
+      row.innerHTML = `
+        <div class="pricing-check-card show">
+          <div class="price-row"><span class="label">基准价</span><span class="value">¥${s.baseline || '--'}</span></div>
+          <div class="price-row"><span class="label">合理区间</span><span class="value" style="font-size:11px">¥${s.rangeLow || '--'} - ¥${s.rangeHigh || '--'}</span></div>
+          <div class="price-row"><span class="label">新料参考价</span><span class="value" style="color:var(--info)">¥${s.newMaterialPrice || '--'}</span></div>
+          ${s.newMaterialPrice ? `<div class="price-row"><span class="label">再生料溢价</span><span class="value" style="color:var(--text-hint);font-size:11px">${s.recycledPremium || '--'}</span></div>` : ''}
+          ${warnHtml}
+        </div>`;
+    } else {
+      row.innerHTML = '<div style="font-size:12px;color:var(--text-hint);padding:8px 0">暂无该品类基准价数据</div>';
+    }
+  } catch (e) {
+    row.innerHTML = '<div style="font-size:12px;color:var(--text-hint);padding:8px 0">定价检测暂不可用</div>';
+  }
+}
+
+
+/* ===================================================================
+   SECTION 17: EXTERNAL — External Listings (P0-2)
+   =================================================================== */
+let _externalListings = [];
+let _externalFilter = 'all';
+
+async function loadExternalListings() {
+  const container = document.getElementById('extListings');
+  const empty = document.getElementById('extEmpty');
+  const status = document.getElementById('extStatus');
+
+  status.textContent = '正在加载全网货源…';
+  container.innerHTML = '';
+
+  try {
+    const data = await api('/api/external/listings?limit=50');
+    if (data.success && data.listings) {
+      _externalListings = data.listings;
+      status.textContent = '共' + _externalListings.length + '条全网货源 · 来自91再生/变宝网/再塑宝';
+      applyExternalFilter();
+    } else {
+      status.textContent = '暂无全网货源数据';
+      empty.style.display = 'flex';
+    }
+  } catch (e) {
+    status.textContent = '加载失败，请重试';
+    empty.style.display = 'flex';
+  }
+}
+
+function filterExternalSource(source, el) {
+  _externalFilter = source;
+  document.querySelectorAll('#externalContent .quick-filters .quick-chip').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+  applyExternalFilter();
+}
+
+function applyExternalFilter() {
+  const container = document.getElementById('extListings');
+  const empty = document.getElementById('extEmpty');
+  const status = document.getElementById('extStatus');
+
+  let filtered = _externalListings;
+  if (_externalFilter !== 'all') {
+    filtered = _externalListings.filter(l => l.source === _externalFilter);
+  }
+
+  status.textContent = '显示' + filtered.length + '条' + (_externalFilter !== 'all' ? ' · ' + _externalFilter : '') + ' · 共' + _externalListings.length + '条';
+
+  if (filtered.length === 0) {
+    container.innerHTML = '';
+    empty.style.display = 'flex';
+    return;
+  }
+  empty.style.display = 'none';
+
+  container.innerHTML = filtered.map(l => {
+    const sourceCls = l.source === '91再生' ? 'ext-source-91' : l.source === '变宝网' ? 'ext-source-bianbao' : 'ext-source-zaisubao';
+    return `<div class="ext-listing-card">
+      <div class="ext-header">
+        <span class="ext-material">${escapeHtml(l.material || '未知')}</span>
+        <span class="external-source-badge ${sourceCls}">${escapeHtml(l.source || '')}</span>
+      </div>
+      <div class="ext-info">
+        <strong>${escapeHtml(l.form || '')}</strong> ·
+        ${l.quantity ? '<strong>' + escapeHtml(l.quantity) + '吨</strong> · ' : ''}
+        ${l.price ? '<strong>¥' + escapeHtml(l.price) + '/吨</strong> · ' : ''}
+        ${l.type ? (l.type === 'supply' ? '出售' : '求购') : ''}
+      </div>
+      <div class="ext-footer">
+        <span>📍 ${escapeHtml(l.location || '未知')}</span>
+        <span>${l.crawl_time ? timeAgo(l.crawl_time) : ''}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+
+/* ===================================================================
+   SECTION 18a: MARKET CHARTS — 行情图表渲染
+   =================================================================== */
+
+let _chartRange = 7;
+let _trendCache = null;
+let _statsCache = null;
+
+function switchChartRange(days, el) {
+  _chartRange = days;
+  document.querySelectorAll('#trendChartArea .chart-tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  if (_trendCache) renderTrendChart(_trendCache);
+}
+
+async function loadMarketCharts() {
+  // Fetch trends and stats in parallel
+  const [trendsRes, statsRes] = await Promise.all([
+    api('/api/pricing/trends?days=30').catch(() => null),
+    api('/api/external/stats').catch(() => null)
+  ]);
+
+  _trendCache = trendsRes && trendsRes.success ? trendsRes.data || trendsRes.trends : null;
+  _statsCache = statsRes && statsRes.success ? statsRes.data || statsRes.stats : null;
+
+  renderPriceOverview();
+  if (_trendCache && _trendCache.length > 0) {
+    document.getElementById('trendChartArea').style.display = '';
+    renderTrendChart(_trendCache);
+  }
+  if (_statsCache && Object.keys(_statsCache).length > 0) {
+    document.getElementById('heatmapArea').style.display = '';
+    renderCategoryHeatmap(_statsCache);
+  }
+  state._chartsLoaded = true;
+  loadSpreadCard().catch(() => {});
+  loadRegionalHeatmap().catch(() => {});
+}
+
+function renderPriceOverview() {
+  const container = document.getElementById('priceOverview');
+  if (!_trendCache || _trendCache.length === 0) {
+    container.style.display = 'none';
+    return;
+  }
+  container.style.display = '';
+
+  // Calculate summary stats from trend data
+  const latest = _trendCache[_trendCache.length - 1] || {};
+  const first = _trendCache[0] || {};
+  const avgPrice = _trendCache.reduce((s, d) => s + (d.price_avg || 0), 0) / _trendCache.length;
+  const change = latest.price_avg && first.price_avg ? ((latest.price_avg - first.price_avg) / first.price_avg * 100) : 0;
+  const trendDir = change >= 1 ? 'trend-up' : change <= -1 ? 'trend-down' : 'trend-flat';
+  const trendIcon = change >= 1 ? '📈' : change <= -1 ? '📉' : '➡️';
+
+  const categories = [...new Set(_trendCache.map(d => d.category).filter(Boolean))];
+
+  container.innerHTML = `
+    <div class="overview-card ${trendDir}">
+      <div class="ov-num">${avgPrice.toFixed(0)}</div>
+      <div class="ov-label">均价（元/吨）</div>
+    </div>
+    <div class="overview-card ${trendDir}">
+      <div class="ov-num">${trendIcon} ${change >= 0 ? '+' : ''}${change.toFixed(1)}%</div>
+      <div class="ov-label">30日变化</div>
+    </div>
+    <div class="overview-card">
+      <div class="ov-num">${categories.length}</div>
+      <div class="ov-label">活跃品类</div>
+    </div>
+    <div class="overview-card">
+      <div class="ov-num">${_statsCache && _statsCache.total ? _statsCache.total : _trendCache.length}</div>
+      <div class="ov-label">数据点</div>
+    </div>
+  `;
+}
+
+function renderTrendChart(trends) {
+  const container = document.getElementById('trendChart');
+  if (!trends || trends.length === 0) {
+    container.innerHTML = '<div style="font-size:12px;color:var(--text-hint);text-align:center;padding:40px">暂无趋势数据</div>';
+    return;
+  }
+
+  // Filter by selected date range
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - _chartRange);
+  const filtered = trends.filter(d => new Date(d.recorded_date || d.created_at) >= cutoff);
+  if (filtered.length === 0) {
+    container.innerHTML = '<div style="font-size:12px;color:var(--text-hint);text-align:center;padding:40px">该时间范围内无数据</div>';
+    return;
+  }
+
+  // Group by category for multi-line chart
+  const catGroups = {};
+  filtered.forEach(d => {
+    const cat = d.category || 'all';
+    if (!catGroups[cat]) catGroups[cat] = [];
+    catGroups[cat].push(d);
+  });
+
+  // Calculate chart dimensions
+  const padding = { top: 10, right: 10, bottom: 30, left: 50 };
+  const w = 600; // viewport width (SVG scales with CSS)
+  const h = 160;
+  const chartW = w - padding.left - padding.right;
+  const chartH = h - padding.top - padding.bottom;
+
+  // Find global min/max for y-axis
+  const allPrices = filtered.map(d => d.price_avg || 0).filter(p => p > 0);
+  let yMin = Math.min(...allPrices) * 0.9;
+  let yMax = Math.max(...allPrices) * 1.1;
+  if (yMin === yMax) { yMin -= 100; yMax += 100; }
+
+  const colors = ['#059652', '#e65100', '#1989fa', '#9c27b0', '#ff6d00'];
+
+  let svg = `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
+    <!-- Grid lines -->
+    ${[0, 0.25, 0.5, 0.75, 1].map(f => {
+      const y = padding.top + chartH * (1 - f);
+      const val = (yMin + (yMax - yMin) * f).toFixed(0);
+      return `<line x1="${padding.left}" y1="${y}" x2="${w - padding.right}" y2="${y}" stroke="#eee" stroke-width="0.5"/>
+        <text x="${padding.left - 4}" y="${y + 4}" text-anchor="end" font-size="9" fill="#999">${val}</text>`;
+    }).join('')}
+
+    <!-- Lines for each category -->
+    ${Object.entries(catGroups).map(([cat, points], ci) => {
+      if (points.length < 2) return '';
+      const color = colors[ci % colors.length];
+      const sorted = points.sort((a, b) => new Date(a.recorded_date || a.created_at) - new Date(b.recorded_date || b.created_at));
+      const xScale = chartW / (sorted.length - 1);
+      const path = sorted.map((p, i) => {
+        const x = padding.left + i * xScale;
+        const y = padding.top + chartH * (1 - (p.price_avg - yMin) / (yMax - yMin));
+        return `${i === 0 ? 'M' : 'L'}${x},${y}`;
+      }).join(' ');
+
+      // Last point label
+      const last = sorted[sorted.length - 1];
+      const lastX = padding.left + (sorted.length - 1) * xScale;
+      const lastY = padding.top + chartH * (1 - (last.price_avg - yMin) / (yMax - yMin));
+
+      return `<path d="${path}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="${lastX + 4}" y="${lastY + 3}" font-size="9" fill="${color}">${cat} ${last.price_avg}元</text>`;
+    }).join('')}
+
+    <!-- X-axis dates -->
+    ${(() => {
+      const allDates = [...new Set(filtered.map(d => (d.recorded_date || d.created_at || '').slice(5, 10)))];
+      if (allDates.length <= 1) return '';
+      const step = Math.max(1, Math.floor(allDates.length / 5));
+      return allDates.filter((_, i) => i % step === 0 || i === allDates.length - 1).map((d, i, arr) => {
+        const x = padding.left + (chartW * (arr.length > 1 ? i / (arr.length - 1) : 0));
+        return `<text x="${x}" y="${h - 8}" text-anchor="middle" font-size="8" fill="#999">${d}</text>`;
+      }).join('');
+    })()}
+  </svg>`;
+
+  container.innerHTML = svg;
+}
+
+function renderCategoryHeatmap(stats) {
+  const container = document.getElementById('heatmapContent');
+  let entries = [];
+
+  // Accept stats in various formats: { byCategory: {...} }, arrays, or flat key-value
+  if (stats.byCategory) {
+    entries = Object.entries(stats.byCategory).map(([k, v]) => [k, typeof v === 'object' ? v.count || v.total || 0 : v]);
+  } else if (stats.bySource) {
+    entries = Object.entries(stats.bySource).map(([k, v]) => [k, typeof v === 'object' ? v.count || v.total || 0 : v]);
+  } else {
+    entries = Object.entries(stats).filter(([k]) => isNaN(Number(k)));
+  }
+
+  if (entries.length === 0) {
+    container.innerHTML = '<div style="font-size:12px;color:var(--text-hint);text-align:center">暂无热度数据</div>';
+    return;
+  }
+
+  entries.sort((a, b) => b[1] - a[1]);
+  const maxVal = Math.max(...entries.map(e => e[1]));
+  const gradientColors = ['#059652', '#1989fa', '#ffc300', '#e65100', '#9c27b0', '#ff6d00'];
+
+  container.innerHTML = entries.map(([label, val], i) => {
+    const pct = maxVal > 0 ? ((val / maxVal) * 100) : 0;
+    const color = gradientColors[i % gradientColors.length];
+    return `<div class="heatmap-bar">
+      <span class="hm-label">${escapeHtml(label)}</span>
+      <div class="hm-track"><div class="hm-fill" style="width:${pct}%;background:${color}"></div></div>
+      <span class="hm-val">${val}</span>
+    </div>`;
+  }).join('');
+}
+
+/* ---- Spread Card — 新料-再生料价差 ---- */
+async function loadSpreadCard() {
+  const card = document.getElementById('spreadCard');
+  const content = document.getElementById('spreadContent');
+  const cat = document.getElementById('spreadCatSelect').value;
+  try {
+    const res = await api('/api/pricing/suggest?category=' + cat + '&form=颗粒&region=华东');
+    if (res.success && res.data && res.data.newMaterialPrice) {
+      const d = res.data;
+      const spread = Math.round((1 - d.suggestedPrice / d.newMaterialPrice) * 100);
+      content.innerHTML = '<div class="spread-row"><span class="label">新料参考价</span><span class="val">¥' + d.newMaterialPrice + '/吨</span></div>' +
+        '<div class="spread-row"><span class="label">再生料建议价</span><span class="val">¥' + d.suggestedPrice + '/吨</span></div>' +
+        '<div class="spread-value" style="margin-top:8px">价差 ' + spread + '%</div>' +
+        '<div class="spread-insight">' + escapeHtml(d.insight || '') + '</div>';
+      card.style.display = '';
+    } else { card.style.display = 'none'; }
+  } catch (e) { card.style.display = 'none'; }
+}
+
+/* ---- Regional Heatmap — 区域价格热力图 ---- */
+async function loadRegionalHeatmap() {
+  const container = document.getElementById('regionalHeatmap');
+  const content = document.getElementById('regionalHeatmapContent');
+  try {
+    const res = await api('/api/pricing/heatmap');
+    if (!res.success || !res.data) { container.style.display = 'none'; return; }
+    const cat = document.getElementById('spreadCatSelect').value;
+    const regionData = res.data.filter(d => d.category === cat || !cat);
+    const byRegion = {};
+    regionData.forEach(d => {
+      if (!byRegion[d.region]) byRegion[d.region] = { region: d.region, cats: {} };
+      byRegion[d.region].cats[d.category] = d.recycledPrice;
+    });
+    const regions = Object.values(byRegion);
+    const allPrices = regionData.map(d => d.recycledPrice || 0).filter(p => p > 0);
+    const maxPrice = Math.max(...allPrices, 1);
+    content.innerHTML = '<div class="heatmap-grid">' + regions.map(r => {
+      const price = r.cats[cat] || Object.values(r.cats)[0] || 0;
+      const intensity = price / maxPrice;
+      const hue = 200 - intensity * 160;
+      const bg = 'hsl(' + hue + ',70%,' + (85 - intensity * 30) + '%)';
+      return '<div class="heatmap-cell" style="background:' + bg + '"><div class="rname">' + r.region + '</div><div class="rprice">¥' + (price || '--') + '</div></div>';
+    }).join('') + '</div>';
+    container.style.display = '';
+  } catch (e) { container.style.display = 'none'; }
+}
+
+
+/* ===================================================================
+   SECTION 18: QUALITY — 6-dim Score Helpers (P0-3)
+   =================================================================== */
+// Quality rendering is handled inline in openMatchDetailSheet above
+
+
+/* ===================================================================
+   SECTION 19: INIT EXTENSION — Load vision history from localStorage
+   =================================================================== */
+// Extend loadSession / init to restore vision history
+(function() {
+  const origInit = init;
+  // Patch init after it's defined
+  const _origLoadSession = loadSession;
+  const origLoadSessionFn = function() {
+    _origLoadSession();
+    try {
+      const vh = localStorage.getItem('zs5_vision_history');
+      if (vh) state._visionHistory = JSON.parse(vh);
+    } catch(e) {}
+  };
+  // We'll override loadSession at the end
+})();
+
+// Save vision history periodically
+function saveVisionHistory() {
+  try {
+    if (state._visionHistory) {
+      localStorage.setItem('zs5_vision_history', JSON.stringify(state._visionHistory.slice(0, 20)));
+    }
+  } catch(e) {}
+}
+
+
+/* ===================================================================
+   SECTION 14: INITIALIZATION
+   =================================================================== */
+function init() {
+  loadSession();
+
+  if (isLoggedIn()) {
+    updateUserUI();
+    loadHomePage();
+    loadDealBadge();
+  } else {
+    // Show registration after short delay
+    setTimeout(showRegistration, 400);
+  }
+
+  // Keyboard: Enter to submit
+  document.getElementById('aiInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      submitAIInput();
+    }
+  });
+
+  // Login form: Enter to submit
+  document.getElementById('loginPassword').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); submitLogin(); }
+  });
+  document.getElementById('loginName').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('loginPassword').focus(); }
+  });
+
+  // Register form: Enter to submit
+  document.getElementById('regPassword').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); submitRegistration(); }
+  });
+
+  // Close modals on overlay click
+  document.getElementById('regModal').addEventListener('click', function(e) {
+    if (e.target === this && isLoggedIn()) { hideRegistration(); }
+  });
+
+  setupPullToRefresh();
+
+  // Online/offline detection
+  window.addEventListener('online', () => {
+    document.getElementById('networkBar').classList.remove('show');
+    showToast('✅ 网络已恢复', 'success');
+  });
+  window.addEventListener('offline', () => {
+    document.getElementById('networkBar').classList.add('show');
+  });
+
+  // Periodic refresh on home (every 60s)
+  state._refreshInterval = setInterval(() => {
+    if (state.activeTab === 'home' && isLoggedIn() && document.visibilityState === 'visible') {
+      loadHomePage();
+    }
+  }, 60000);
+
+  // Message unread polling (every 15s)
+  setInterval(() => {
+    if (isLoggedIn() && document.visibilityState === 'visible') {
+      fetchUnreadCount();
+    }
+  }, 15000);
+  // Initial fetch
+  setTimeout(() => { if (isLoggedIn()) fetchUnreadCount(); }, 3000);
+}
+
+/* ===================================================================
+   SECTION 13: CHAT (Messages)
+   =================================================================== */
+
+async function loadConversations() {
+  if (!isLoggedIn()) { showRegistration(); return; }
+  const loadingEl = document.getElementById('convLoading');
+  const listEl = document.getElementById('convList');
+  const emptyEl = document.getElementById('convEmpty');
+
+  loadingEl.style.display = '';
+  listEl.innerHTML = '';
+  emptyEl.style.display = 'none';
+
+  try {
+    const data = await api('/api/messages/conversations');
+    loadingEl.style.display = 'none';
+
+    if (!data.conversations || data.conversations.length === 0) {
+      emptyEl.style.display = '';
+      return;
+    }
+
+    listEl.innerHTML = data.conversations.map(c => {
+      const avatarIcon = (c.other_user_role || '').includes('打包') ? '🏭' :
+                         (c.other_user_role || '').includes('再生') ? '🏗️' :
+                         (c.other_user_role || '').includes('制品') ? '🔧' : '🤝';
+      const lastMsg = c.last_message ? c.last_message.substring(0, 50) : '';
+      return `
+        <div class="conv-item" onclick="openChat(${c.other_user_id},'${escapeHtml(c.other_user_name||'')}','${escapeHtml(c.other_user_role||'')}','${c.conversation_id}')">
+          <div class="conv-avatar">${avatarIcon}</div>
+          <div class="conv-body">
+            <div class="conv-header">
+              <span class="conv-name">${escapeHtml(c.other_user_name||'用户')}</span>
+              <span class="conv-time">${timeAgo(c.last_time)}</span>
+            </div>
+            <div class="conv-last">${escapeHtml(lastMsg)}</div>
+          </div>
+          ${c.unread > 0 ? `<div class="conv-badge">${c.unread > 99 ? '99+' : c.unread}</div>` : ''}
+        </div>`;
+    }).join('');
+  } catch (e) {
+    loadingEl.style.display = 'none';
+    showToast('加载会话失败: ' + e.message, 'error');
+  }
+}
+
+function openChat(otherUserId, otherUserName, otherUserRole, conversationId) {
+  if (!isLoggedIn()) { showRegistration(); return; }
+  state._chatConversationId = conversationId;
+  state._chatPeerId = otherUserId;
+  state._chatPeerName = otherUserName;
+  state._chatPeerRole = otherUserRole;
+
+  document.getElementById('chatPeerName').textContent = otherUserName;
+  document.getElementById('chatPeerRole').textContent = otherUserRole;
+  document.getElementById('chatMessages').innerHTML = '<div class="chat-empty" id="chatEmpty"><div class="icon">💬</div><div>加载中…</div></div>';
+
+  // Switch to chat page — hide bottom nav so input bar is accessible
+  state.activeTab = 'chat';
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const chatPage = document.getElementById('page-chat');
+  if (chatPage) chatPage.classList.add('active');
+  const bottomNav = document.querySelector('.bottom-nav');
+  if (bottomNav) bottomNav.style.display = 'none';
+  document.querySelectorAll('.bottom-nav .tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
+
+  loadChat(conversationId);
+}
+
+async function openChatFromListing(listingId) {
+  if (!isLoggedIn()) { showToast('请先登录', 'error'); return; }
+  const l = (state.listings || state.myListings || []).find(x => x.id === listingId);
+  if (!l) return showToast('数据不存在', 'error');
+  if (!l.user_id) return showToast('无法获取对方信息', 'error');
+
+  const myUserId = state.userId;
+  const otherUserId = l.user_id;
+  const otherUserName = l.user_name || '';
+  const otherUserRole = l.user_role || '';
+
+  const ids = [myUserId, otherUserId].sort((a, b) => a - b);
+  const conversationId = 'conv_' + ids[0] + '_' + ids[1];
+
+  openChat(otherUserId, otherUserName, otherUserRole, conversationId);
+}
+
+async function openChatFromMatch(matchId) {
+  const m = (state.matches || []).find(x => x.id === matchId);
+  if (!m) return showToast('匹配数据不存在', 'error');
+
+  const myUserId = state.userId;
+  let otherUserId, otherUserName, otherUserRole;
+
+  // Determine which side is "the other person"
+  if (m.supply_user_id === myUserId) {
+    otherUserId = m.demand_user_id;
+    otherUserName = m.demand_user_name;
+    otherUserRole = m.demand_user_role;
+  } else {
+    otherUserId = m.supply_user_id;
+    otherUserName = m.supply_user_name;
+    otherUserRole = m.supply_user_role;
+  }
+
+  if (!otherUserId) return showToast('无法获取对方信息', 'error');
+
+  // Generate conversation ID
+  const ids = [myUserId, otherUserId].sort((a, b) => a - b);
+  const conversationId = 'conv_' + ids[0] + '_' + ids[1];
+
+  openChat(otherUserId, otherUserName, otherUserRole, conversationId);
+}
+
+async function loadChat(conversationId) {
+  if (!isLoggedIn()) return;
+  try {
+    const data = await api('/api/messages/' + conversationId + '?limit=100');
+    renderChatMessages(data.messages || []);
+  } catch (e) {
+    document.getElementById('chatMessages').innerHTML = '<div class="chat-empty"><div class="icon">⚠️</div><div>加载失败: ' + escapeHtml(e.message) + '</div></div>';
+  }
+}
+
+function renderChatMessages(messages) {
+  const container = document.getElementById('chatMessages');
+  if (!messages || messages.length === 0) {
+    container.innerHTML = '<div class="chat-empty" id="chatEmpty"><div class="icon">💬</div><div>发送第一条消息，开始沟通</div></div>';
+    return;
+  }
+
+  let lastDate = '';
+  container.innerHTML = messages.map(msg => {
+    const isMe = msg.sender_id === state.userId;
+    const dateStr = new Date(msg.created_at + '+08:00').toLocaleDateString('zh-CN');
+    let dateHeader = '';
+    if (dateStr !== lastDate) {
+      lastDate = dateStr;
+      dateHeader = '<div class="msg-time">' + dateStr + '</div>';
+    }
+    const timeStr = new Date(msg.created_at + '+08:00').toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+    return dateHeader + `
+      <div class="msg-row ${isMe ? 'me' : 'other'}">
+        <div class="msg-bubble">
+          ${escapeHtml(msg.content)}
+          <div style="font-size:10px;margin-top:4px;opacity:${isMe ? '0.7' : '0.5'}">${timeStr}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Scroll to bottom
+  setTimeout(() => { container.scrollTop = container.scrollHeight; }, 100);
+}
+
+async function sendChatMessage() {
+  if (!isLoggedIn()) return;
+  const input = document.getElementById('chatInput');
+  const btn = document.getElementById('chatSendBtn');
+  const content = input.value.trim();
+  if (!content) return;
+
+  const peerId = state._chatPeerId;
+  if (!peerId) return;
+
+  btn.disabled = true;
+  try {
+    await api('/api/messages/send', {
+      method: 'POST',
+      body: JSON.stringify({ receiverId: peerId, content })
+    });
+    input.value = '';
+    // Reload chat
+    if (state._chatConversationId) {
+      await loadChat(state._chatConversationId);
+    }
+  } catch (e) {
+    showToast('发送失败: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    input.focus();
+  }
+}
+
+async function fetchUnreadCount() {
+  if (!isLoggedIn()) return;
+  try {
+    const data = await api('/api/messages/unread/count');
+    const badge = document.getElementById('msgBadge');
+    if (badge && data.unreadMessages > 0) {
+      badge.classList.add('show');
+    } else if (badge) {
+      badge.classList.remove('show');
+    }
+  } catch (_) { /* ignore polling errors */ }
+}
+
+// Start
+document.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>

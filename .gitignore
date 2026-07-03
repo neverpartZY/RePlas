@@ -1,0 +1,11 @@
+node_modules/
+backend/data/
+backend/uploads/
+*.log
+server.log
+*.db
+_qa_*
+test_login.json
+_run.js
+.DS_Store
+.env

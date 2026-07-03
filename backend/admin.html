@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>再塑通 · 管理后台</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --primary:#1a73e8;--primary-dark:#1557b0;--success:#0f9d58;--danger:#ea4335;
+  --warning:#f9ab00;--bg:#f1f3f4;--card-bg:#fff;--text:#202124;--text-secondary:#5f6368;
+  --border:#dadce0;--shadow:0 1px 3px rgba(0,0,0,.08);--radius:8px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* Login */
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#1a73e8 0%,#0d47a1 100%)}
+.login-card{background:#fff;border-radius:12px;padding:40px;width:380px;box-shadow:0 4px 24px rgba(0,0,0,.15)}
+.login-card h1{font-size:24px;text-align:center;margin-bottom:8px}
+.login-card .sub{text-align:center;color:var(--text-secondary);margin-bottom:24px;font-size:14px}
+.login-card label{display:block;font-size:13px;font-weight:500;margin-bottom:4px;color:var(--text-secondary)}
+.login-card input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;margin-bottom:16px;outline:none;transition:border .2s}
+.login-card input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(26,115,232,.15)}
+.login-card button{width:100%;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:6px;font-size:15px;font-weight:500;cursor:pointer;transition:background .2s}
+.login-card button:hover{background:var(--primary-dark)}
+.login-card .err{color:var(--danger);font-size:13px;text-align:center;margin-top:8px;min-height:20px}
+
+/* Layout */
+.layout{display:none;min-height:100vh}
+.layout.active{display:flex}
+.sidebar{width:220px;background:#fff;border-right:1px solid var(--border);padding:16px 0;flex-shrink:0}
+.sidebar .logo{padding:0 20px 16px;font-size:18px;font-weight:600;border-bottom:1px solid var(--border);margin-bottom:8px}
+.sidebar .nav-item{display:block;padding:10px 20px;font-size:14px;color:var(--text-secondary);cursor:pointer;text-decoration:none;transition:all .15s;border-left:3px solid transparent}
+.sidebar .nav-item:hover{background:#f8f9fa;color:var(--text)}
+.sidebar .nav-item.active{color:var(--primary);background:#e8f0fe;border-left-color:var(--primary);font-weight:500}
+.sidebar .nav-item .badge{float:right;background:var(--danger);color:#fff;font-size:11px;padding:1px 6px;border-radius:10px;min-width:20px;text-align:center}
+.main{flex:1;padding:20px;overflow-y:auto}
+.main h2{font-size:20px;margin-bottom:16px}
+
+/* Cards */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:24px}
+.stat-card{background:var(--card-bg);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+.stat-card .label{font-size:12px;color:var(--text-secondary);margin-bottom:4px}
+.stat-card .value{font-size:28px;font-weight:600}
+.stat-card .sub{font-size:12px;color:var(--text-secondary);margin-top:4px}
+.stat-card.warn{border-left:4px solid var(--warning)}
+.stat-card.danger{border-left:4px solid var(--danger)}
+
+/* Table */
+.table-wrap{background:var(--card-bg);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.toolbar{display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);align-items:center;flex-wrap:wrap}
+.toolbar input,.toolbar select{padding:6px 10px;border:1px solid var(--border);border-radius:4px;font-size:13px;outline:none}
+.toolbar input:focus,.toolbar select:focus{border-color:var(--primary)}
+.toolbar input{width:200px}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:10px 16px;font-size:12px;font-weight:500;color:var(--text-secondary);background:#f8f9fa;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:10px 16px;font-size:13px;border-bottom:1px solid #f1f3f4}
+tr:hover td{background:#f8f9fa}
+.tag{display:inline-block;padding:2px 8px;border-radius:12px;font-size:12px;font-weight:500}
+.tag-active{background:#e6f4ea;color:var(--success)}
+.tag-suspended{background:#fce8e6;color:var(--danger)}
+.tag-pending{background:#fef7e0;color:#e37400}
+.tag-approved{background:#e6f4ea;color:var(--success)}
+.tag-rejected{background:#fce8e6;color:var(--danger)}
+.tag-auto{background:#e8f0fe;color:var(--primary)}
+.tag-admin{background:#e8f0fe;color:var(--primary);font-size:11px;padding:1px 6px;border-radius:4px;margin-left:4px}
+
+.btn{padding:6px 14px;border:none;border-radius:4px;font-size:13px;cursor:pointer;font-weight:500;transition:all .15s}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-success{background:var(--success);color:#fff}
+.btn-success:hover{background:#0b8043}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover{background:#c5221f}
+.btn-outline{background:transparent;color:var(--primary);border:1px solid var(--primary)}
+.btn-outline:hover{background:#e8f0fe}
+.btn-ghost{background:transparent;color:var(--text-secondary);border:1px solid var(--border)}
+.btn-ghost:hover{background:#f1f3f4}
+
+.pagination{display:flex;align-items:center;justify-content:center;gap:8px;padding:16px}
+.pagination .info{font-size:13px;color:var(--text-secondary);margin:0 8px}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.active{display:flex}
+.modal{background:#fff;border-radius:12px;padding:24px;width:480px;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2)}
+.modal h3{font-size:18px;margin-bottom:16px}
+.modal .row{display:flex;gap:16px;margin-bottom:12px}
+.modal .row>div{flex:1}
+.modal label{display:block;font-size:12px;color:var(--text-secondary);margin-bottom:4px}
+.modal .val{font-size:14px;padding:4px 0}
+.modal textarea{width:100%;padding:8px;border:1px solid var(--border);border-radius:4px;font-size:13px;resize:vertical;min-height:80px;margin-top:12px}
+.modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+
+.quote{background:#fff3cd;border-left:4px solid var(--warning);padding:12px 16px;border-radius:4px;margin:16px 0;font-size:13px}
+.quote code{background:#f1f3f4;padding:1px 4px;border-radius:3px;font-size:12px}
+
+.toast{position:fixed;top:20px;right:20px;padding:10px 20px;border-radius:6px;color:#fff;font-size:13px;z-index:200;animation:slideIn .3s ease;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.toast-success{background:var(--success)}
+.toast-error{background:var(--danger)}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+.header-bar{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;background:#fff;border-bottom:1px solid var(--border)}
+.header-bar .user{font-size:13px;color:var(--text-secondary)}
+.header-bar .user strong{color:var(--text)}
+.header-bar button{font-size:12px}
+</style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div class="login-wrap" id="loginScreen">
+  <form class="login-card" onsubmit="doLogin(event)">
+    <h1>再塑通</h1>
+    <div class="sub">管理后台</div>
+    <label>账号</label>
+    <input type="text" id="loginName" value="admin" required>
+    <label>密码</label>
+    <input type="password" id="loginPass" value="admin123" required>
+    <button type="submit">登录</button>
+    <div class="err" id="loginErr"></div>
+  </form>
+</div>
+
+<!-- Main Layout -->
+<div class="layout" id="mainLayout">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="logo">再塑通 管理</div>
+    <a class="nav-item active" data-tab="dashboard" onclick="switchTab('dashboard')">仪表盘</a>
+    <a class="nav-item" data-tab="users" onclick="switchTab('users')">用户管理</a>
+    <a class="nav-item" data-tab="listings" onclick="switchTab('listings')">内容审核 <span class="badge" id="pendingBadge">0</span></a>
+    <a class="nav-item" data-tab="reports" onclick="switchTab('reports')">举报管理 <span class="badge" id="reportBadge">0</span></a>
+    <a class="nav-item" data-tab="logs" onclick="switchTab('logs')">操作日志</a>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="main">
+    <div class="header-bar">
+      <span>欢迎，<strong id="adminName">管理员</strong></span>
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">退出登录</button>
+    </div>
+    <div id="tabContent" style="padding:20px 0 0 0"></div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalBox"></div>
+</div>
+
+<script>
+// ============================================================
+// Config
+// ============================================================
+const API = 'http://localhost:3456/api';
+let TOKEN = '';
+let currentTab = 'dashboard';
+let currentUser = null;
+
+// ============================================================
+// Auth
+// ============================================================
+async function doLogin(e) {
+  e.preventDefault();
+  const errEl = document.getElementById('loginErr');
+  errEl.textContent = '';
+  const name = document.getElementById('loginName').value.trim();
+  const pass = document.getElementById('loginPass').value.trim();
+
+  try {
+    const res = await fetch(API + '/auth/login', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ name, password: pass })
+    });
+    const data = await res.json();
+    if (!data.success) { errEl.textContent = data.error || '登录失败'; return; }
+
+    TOKEN = data.data.token;
+    currentUser = data.data.user;
+    localStorage.setItem('admin_token', TOKEN);
+
+    // Verify admin
+    if (!currentUser.is_admin) {
+      errEl.textContent = '该账号不是管理员，无法登录管理后台';
+      TOKEN = '';
+      return;
+    }
+
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('mainLayout').classList.add('active');
+    document.getElementById('adminName').textContent = currentUser.name;
+    switchTab('dashboard');
+  } catch (err) {
+    errEl.textContent = '网络错误，请确认后端已启动';
+  }
+}
+
+function doLogout() {
+  TOKEN = '';
+  currentUser = null;
+  localStorage.removeItem('admin_token');
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('mainLayout').classList.remove('active');
+}
+
+function authHeaders() {
+  return { 'Content-Type':'application/json', 'Authorization':'Bearer ' + TOKEN };
+}
+
+// ============================================================
+// Navigation
+// ============================================================
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+  renderTab(tab);
+}
+
+// ============================================================
+// Tab Rendering
+// ============================================================
+async function renderTab(tab) {
+  const container = document.getElementById('tabContent');
+  container.innerHTML = '<p style="text-align:center;padding:40px;color:#999">加载中...</p>';
+
+  switch (tab) {
+    case 'dashboard': await renderDashboard(container); break;
+    case 'users': await renderUsers(container); break;
+    case 'listings': await renderListings(container); break;
+    case 'reports': await renderReports(container); break;
+    case 'logs': await renderLogs(container); break;
+  }
+}
+
+// ---- Dashboard ----
+async function renderDashboard(container) {
+  try {
+    const res = await fetch(API + '/admin/dashboard', { headers: authHeaders() });
+    const json = await res.json();
+    if (!json.success) { container.innerHTML = `<p style="color:red">${json.error}</p>`; return; }
+    const d = json.data;
+
+    document.getElementById('pendingBadge').textContent = d.moderation.pendingReviews || 0;
+    document.getElementById('reportBadge').textContent = d.moderation.pendingReports || 0;
+
+    let html = '<div class="stats-grid">';
+    html += `<div class="stat-card"><div class="label">总用户</div><div class="value">${d.users.total}</div><div class="sub">活跃 ${d.users.active} / 冻结 ${d.users.suspended}</div></div>`;
+    html += `<div class="stat-card"><div class="label">总供需</div><div class="value">${d.listings.total}</div><div class="sub">供应 ${d.listings.supply} / 需求 ${d.listings.demand}</div></div>`;
+    html += `<div class="stat-card"><div class="label">撮合匹配</div><div class="value">${d.matches.total}</div><div class="sub">已成交 ${d.matches.deals}</div></div>`;
+    html += `<div class="stat-card warn"><div class="label">待审核</div><div class="value">${d.moderation.pendingReviews}</div><div class="sub">供需信息待审核</div></div>`;
+    html += `<div class="stat-card danger"><div class="label">待处理举报</div><div class="value">${d.moderation.pendingReports}</div><div class="sub">举报待处理</div></div>`;
+    html += '</div>';
+
+    // Role distribution
+    if (d.roleDistribution && d.roleDistribution.length) {
+      html += '<h3 style="font-size:16px;margin-bottom:12px">用户角色分布</h3>';
+      html += '<div class="stats-grid">';
+      d.roleDistribution.forEach(r => {
+        html += `<div class="stat-card"><div class="label">${r.role}</div><div class="value">${r.cnt}</div><div class="sub">人</div></div>`;
+      });
+      html += '</div>';
+    }
+
+    container.innerHTML = html;
+  } catch (e) {
+    container.innerHTML = `<p style="color:red">加载失败: ${e.message}</p>`;
+  }
+}
+
+// ---- Users ----
+async function renderUsers(container) { renderTablePage(container, 'users', { role:'', status:'', keyword:'', page:1 }, loadUsers); }
+async function loadUsers(container, params) {
+  const q = new URLSearchParams({ page: params.page, limit: 20 });
+  if (params.role) q.set('role', params.role);
+  if (params.status) q.set('status', params.status);
+  if (params.keyword) q.set('keyword', params.keyword);
+
+  const res = await fetch(API + '/admin/users?' + q, { headers: authHeaders() });
+  const json = await res.json();
+  if (!json.success) { container.innerHTML = `<p style="color:red">${json.error}</p>`; return; }
+
+  let html = tableToolbar('users', params, [
+    { type:'select', name:'role', opts:[['','全部角色'],['打包站','打包站'],['再生工厂','再生工厂'],['制品·改性·色母','制品·改性·色母'],['贸易商','贸易商'],['管理员','管理员']] },
+    { type:'select', name:'status', opts:[['','全部状态'],['active','正常'],['suspended','已冻结']] },
+    { type:'input', name:'keyword', placeholder:'搜索姓名/公司/手机...' }
+  ]);
+  html += '<table><thead><tr>';
+  html += '<th>ID</th><th>姓名</th><th>角色</th><th>公司</th><th>地区</th><th>手机</th><th>发布数</th><th>状态</th><th>注册时间</th><th>操作</th>';
+  html += '</tr></thead><tbody>';
+
+  json.data.items.forEach(u => {
+    const statusTag = u.status === 'active' ? 'tag-active' : 'tag-suspended';
+    const statusText = u.status === 'active' ? '正常' : '已冻结';
+    html += '<tr>';
+    html += `<td>${u.id}${u.is_admin ? '<span class="tag-admin">管理员</span>' : ''}</td>`;
+    html += `<td>${esc(u.name)}</td>`;
+    html += `<td>${esc(u.role)}</td>`;
+    html += `<td>${esc(u.company || '-')}</td>`;
+    html += `<td>${esc(u.location || '-')}</td>`;
+    html += `<td>${esc(u.phone || '-')}</td>`;
+    html += `<td>${u.listing_count}</td>`;
+    html += `<td><span class="tag ${statusTag}">${statusText}</span></td>`;
+    html += `<td>${formatDate(u.created_at)}</td>`;
+    html += `<td style="white-space:nowrap">`;
+    html += `<button class="btn btn-sm btn-outline" onclick="showUserDetail(${u.id})">详情</button> `;
+    if (u.id !== currentUser.id) {
+      if (u.status === 'active') {
+        html += `<button class="btn btn-sm btn-danger" onclick="banUser(${u.id},'suspended')">冻结</button> `;
+      } else {
+        html += `<button class="btn btn-sm btn-success" onclick="banUser(${u.id},'active')">解冻</button> `;
+      }
+      html += `<button class="btn btn-sm ${u.is_admin ? 'btn-danger' : 'btn-primary'}" onclick="toggleAdmin(${u.id},${u.is_admin ? 0 : 1})">${u.is_admin ? '取消管理员' : '设为管理员'}</button>`;
+    }
+    html += '</td></tr>';
+  });
+  html += '</tbody></table>';
+  html += renderPagination(params.page, json.data.pagination.totalPages, 'users');
+
+  container.innerHTML = html;
+  bindToolbarEvents('users', params);
+}
+
+// ---- Listings ----
+async function renderListings(container) { renderTablePage(container, 'listings', { type:'', review_status:'pending', status:'', keyword:'', page:1 }, loadListings); }
+async function loadListings(container, params) {
+  const q = new URLSearchParams({ page: params.page, limit: 20 });
+  if (params.type) q.set('type', params.type);
+  if (params.review_status) q.set('review_status', params.review_status);
+  if (params.status) q.set('status', params.status);
+  if (params.keyword) q.set('keyword', params.keyword);
+
+  const res = await fetch(API + '/admin/listings?' + q, { headers: authHeaders() });
+  const json = await res.json();
+  if (!json.success) { container.innerHTML = `<p style="color:red">${json.error}</p>`; return; }
+
+  let html = tableToolbar('listings', params, [
+    { type:'select', name:'type', opts:[['','全部类型'],['supply','供应'],['demand','需求']] },
+    { type:'select', name:'review_status', opts:[['pending','待审核'],['approved','已通过'],['rejected','已驳回'],['auto','自动通过'],['','全部审核状态']] },
+    { type:'select', name:'status', opts:[['','全部状态'],['active','活跃'],['fulfilled','已成交'],['closed','已关闭']] },
+    { type:'input', name:'keyword', placeholder:'搜索品类/发布者/公司...' }
+  ]);
+  html += '<table><thead><tr>';
+  html += '<th>ID</th><th>类型</th><th>品类</th><th>数量</th><th>价格</th><th>地区</th><th>发布者</th><th>状态</th><th>审核</th><th>时间</th><th>操作</th>';
+  html += '</tr></thead><tbody>';
+
+  json.data.items.forEach(l => {
+    const typeTag = l.type === 'supply' ? 'tag-active' : 'tag-suspended';
+    const reviewTag = 'tag-' + (l.review_status || 'auto');
+    const reviewText = { auto:'自动', pending:'待审', approved:'已通过', rejected:'已驳回' }[l.review_status] || l.review_status;
+    html += '<tr>';
+    html += `<td>${l.id}</td>`;
+    html += `<td><span class="tag ${typeTag}">${l.type === 'supply' ? '供应' : '需求'}</span></td>`;
+    html += `<td>${esc(l.material)}</td>`;
+    html += `<td>${l.quantity || '-'}吨</td>`;
+    html += `<td>${l.price ? l.price + '元/吨' : (l.price_negotiable ? '面议' : '-')}</td>`;
+    html += `<td>${esc(l.location || '-')}</td>`;
+    html += `<td>${esc(l.user_name)}<br><small style="color:#999">${esc(l.user_company || '')}</small></td>`;
+    html += `<td>${esc(l.status)}</td>`;
+    html += `<td><span class="tag ${reviewTag}">${reviewText}</span></td>`;
+    html += `<td>${formatDate(l.created_at)}</td>`;
+    html += `<td style="white-space:nowrap">`;
+    html += `<button class="btn btn-sm btn-success" onclick="reviewListing(${l.id},'approved')" style="margin-right:4px">通过</button>`;
+    html += `<button class="btn btn-sm btn-danger" onclick="reviewListing(${l.id},'rejected')" style="margin-right:4px">驳回</button>`;
+    html += `<button class="btn btn-sm btn-ghost" onclick="deleteListing(${l.id})">删除</button>`;
+    html += '</td></tr>';
+  });
+  html += '</tbody></table>';
+  html += renderPagination(params.page, json.data.pagination.totalPages, 'listings');
+
+  container.innerHTML = html;
+  bindToolbarEvents('listings', params);
+}
+
+// ---- Reports ----
+async function renderReports(container) { renderTablePage(container, 'reports', { status:'pending', target_type:'', page:1 }, loadReports); }
+async function loadReports(container, params) {
+  const q = new URLSearchParams({ page: params.page, limit: 20 });
+  if (params.status) q.set('status', params.status);
+  if (params.target_type) q.set('target_type', params.target_type);
+
+  const res = await fetch(API + '/admin/reports?' + q, { headers: authHeaders() });
+  const json = await res.json();
+  if (!json.success) { container.innerHTML = `<p style="color:red">${json.error}</p>`; return; }
+
+  let html = tableToolbar('reports', params, [
+    { type:'select', name:'status', opts:[['pending','待处理'],['resolved','已处理'],['dismissed','已驳回'],['','全部状态']] },
+    { type:'select', name:'target_type', opts:[['','全部类型'],['listing','供需信息'],['user','用户'],['message','消息']] }
+  ]);
+  html += '<table><thead><tr>';
+  html += '<th>ID</th><th>举报人</th><th>目标类型</th><th>目标</th><th>原因</th><th>详情</th><th>状态</th><th>处理人</th><th>时间</th><th>操作</th>';
+  html += '</tr></thead><tbody>';
+
+  json.data.items.forEach(r => {
+    const statusTag = r.status === 'pending' ? 'tag-pending' : (r.status === 'resolved' ? 'tag-approved' : 'tag-rejected');
+    const statusText = { pending:'待处理', resolved:'已处理', dismissed:'已驳回' }[r.status];
+    const typeText = { listing:'供需', user:'用户', message:'消息' }[r.target_type];
+    html += '<tr>';
+    html += `<td>${r.id}</td>`;
+    html += `<td>${esc(r.reporter_name)}</td>`;
+    html += `<td>${typeText}</td>`;
+    html += `<td>${esc(r.target_label || r.target_id)}</td>`;
+    html += `<td>${esc(r.reason)}</td>`;
+    html += `<td><small>${esc(r.detail || '-')}</small></td>`;
+    html += `<td><span class="tag ${statusTag}">${statusText}</span></td>`;
+    html += `<td>${esc(r.handler_name || '-')}</td>`;
+    html += `<td>${formatDate(r.created_at)}</td>`;
+    html += `<td style="white-space:nowrap">`;
+    if (r.status === 'pending') {
+      html += `<button class="btn btn-sm btn-success" onclick="handleReport(${r.id},'resolved')" style="margin-right:4px">处理</button>`;
+      html += `<button class="btn btn-sm btn-ghost" onclick="handleReport(${r.id},'dismissed')">驳回</button>`;
+    } else {
+      html += `<small style="color:#999">${r.handle_note || '已处理'}</small>`;
+    }
+    html += '</td></tr>';
+  });
+  html += '</tbody></table>';
+  html += renderPagination(params.page, json.data.pagination.totalPages, 'reports');
+
+  container.innerHTML = html;
+  bindToolbarEvents('reports', params);
+}
+
+// ---- Logs ----
+async function renderLogs(container) { renderTablePage(container, 'logs', { action:'', admin_id:'', page:1 }, loadLogs); }
+async function loadLogs(container, params) {
+  const q = new URLSearchParams({ page: params.page, limit: 50 });
+  if (params.action) q.set('action', params.action);
+
+  const res = await fetch(API + '/admin/logs?' + q, { headers: authHeaders() });
+  const json = await res.json();
+  if (!json.success) { container.innerHTML = `<p style="color:red">${json.error}</p>`; return; }
+
+  const actionLabels = {
+    review_listing:'审核供需', ban_user:'冻结用户', unban_user:'解冻用户',
+    set_admin:'设为管理员', unset_admin:'取消管理员', handle_report:'处理举报',
+    delete_listing:'删除供需', export_data:'导出数据'
+  };
+
+  let html = tableToolbar('logs', params, [
+    { type:'select', name:'action', opts:[['','全部操作'],['review_listing','审核供需'],['ban_user','冻结用户'],['unban_user','解冻用户'],['set_admin','设为管理员'],['unset_admin','取消管理员'],['handle_report','处理举报'],['delete_listing','删除供需'],['export_data','导出数据']] }
+  ]);
+  html += '<table><thead><tr>';
+  html += '<th>ID</th><th>操作人</th><th>操作</th><th>目标类型</th><th>目标ID</th><th>详情</th><th>IP</th><th>时间</th>';
+  html += '</tr></thead><tbody>';
+
+  json.data.items.forEach(l => {
+    let detailStr = '-';
+    try { const d = JSON.parse(l.detail); detailStr = JSON.stringify(d).substring(0, 100); } catch(e) {}
+    html += '<tr>';
+    html += `<td>${l.id}</td>`;
+    html += `<td>${esc(l.admin_name)}</td>`;
+    html += `<td>${actionLabels[l.action] || l.action}</td>`;
+    html += `<td>${esc(l.target_type || '-')}</td>`;
+    html += `<td>${l.target_id || '-'}</td>`;
+    html += `<td><small style="color:#999">${esc(detailStr)}</small></td>`;
+    html += `<td><small>${esc(l.ip || '-')}</small></td>`;
+    html += `<td>${formatDate(l.created_at)}</td>`;
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  html += renderPagination(params.page, json.data.pagination.totalPages, 'logs');
+
+  container.innerHTML = html;
+  bindToolbarEvents('logs', params);
+}
+
+// ============================================================
+// Generic Table Helpers
+// ============================================================
+function tableToolbar(tab, params, filters) {
+  let html = '<div class="toolbar">';
+  filters.forEach(f => {
+    if (f.type === 'input') {
+      html += `<input type="text" id="filter_${f.name}" placeholder="${f.placeholder || ''}" value="${esc(params[f.name] || '')}">`;
+    } else if (f.type === 'select') {
+      html += `<select id="filter_${f.name}">`;
+      f.opts.forEach(([val, label]) => {
+        html += `<option value="${val}" ${params[f.name] === val ? 'selected' : ''}>${label}</option>`;
+      });
+      html += '</select>';
+    }
+  });
+  html += `<button class="btn btn-outline btn-sm" onclick="applyFilters('${tab}')">筛选</button>`;
+  html += `<button class="btn btn-ghost btn-sm" onclick="resetFilters('${tab}')">重置</button>`;
+  if (tab === 'listings' || tab === 'users') {
+    html += `<span style="margin-left:auto"></span>`;
+    html += `<button class="btn btn-primary btn-sm" onclick="exportCSV('${tab === 'listings' ? 'listings' : 'users'}')">导出 CSV</button>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+function bindToolbarEvents(tab, params) {
+  const tb = document.querySelector('.toolbar');
+  if (!tb) return;
+  tb.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') applyFilters(tab); });
+  });
+}
+
+function applyFilters(tab) {
+  const params = JSON.parse(sessionStorage.getItem('admin_filters_' + tab) || '{}');
+  document.querySelectorAll(`[id^="filter_"]`).forEach(el => {
+    params[el.id.replace('filter_', '')] = el.value;
+  });
+  params.page = 1;
+  sessionStorage.setItem('admin_filters_' + tab, JSON.stringify(params));
+  const container = document.getElementById('tabContent');
+  const loadFn = { users:loadUsers, listings:loadListings, reports:loadReports, logs:loadLogs }[tab];
+  loadFn(container, params);
+}
+
+function resetFilters(tab) {
+  const defaults = {
+    users: { role:'', status:'', keyword:'', page:1 },
+    listings: { type:'', review_status:'pending', status:'', keyword:'', page:1 },
+    reports: { status:'pending', target_type:'', page:1 },
+    logs: { action:'', admin_id:'', page:1 }
+  };
+  sessionStorage.setItem('admin_filters_' + tab, JSON.stringify(defaults[tab]));
+  const container = document.getElementById('tabContent');
+  const loadFn = { users:loadUsers, listings:loadListings, reports:loadReports, logs:loadLogs }[tab];
+  loadFn(container, defaults[tab]);
+}
+
+function changePage(tab, page) {
+  const params = JSON.parse(sessionStorage.getItem('admin_filters_' + tab) || '{}');
+  params.page = page;
+  sessionStorage.setItem('admin_filters_' + tab, JSON.stringify(params));
+  const container = document.getElementById('tabContent');
+  const loadFn = { users:loadUsers, listings:loadListings, reports:loadReports, logs:loadLogs }[tab];
+  loadFn(container, params);
+}
+
+function renderPagination(page, totalPages, tab) {
+  if (totalPages <= 1) return '';
+  let html = '<div class="pagination">';
+  html += `<button class="btn btn-sm btn-ghost" ${page <= 1 ? 'disabled' : ''} onclick="changePage('${tab}',${page - 1})">上一页</button>`;
+  html += `<span class="info">第 ${page} / ${totalPages} 页</span>`;
+  html += `<button class="btn btn-sm btn-ghost" ${page >= totalPages ? 'disabled' : ''} onclick="changePage('${tab}',${page + 1})">下一页</button>`;
+  html += '</div>';
+  return html;
+}
+
+function renderTablePage(container, tab, defaults, loader) {
+  if (!sessionStorage.getItem('admin_filters_' + tab)) {
+    sessionStorage.setItem('admin_filters_' + tab, JSON.stringify(defaults));
+  }
+  const params = JSON.parse(sessionStorage.getItem('admin_filters_' + tab));
+  loader(container, params);
+}
+
+// ============================================================
+// Actions
+// ============================================================
+async function banUser(id, status) {
+  const reason = status === 'suspended' ? prompt('请输入冻结原因（选填）：') || '' : '';
+  const res = await fetch(API + '/admin/users/' + id + '/status', {
+    method:'PATCH', headers: authHeaders(),
+    body: JSON.stringify({ status, reason })
+  });
+  const json = await res.json();
+  toast(json.success ? 'success' : 'error', json.message || json.error);
+  if (json.success) switchTab('users');
+}
+
+async function toggleAdmin(id, isAdmin) {
+  if (!confirm(`确认${isAdmin ? '设为' : '取消'}管理员？`)) return;
+  const res = await fetch(API + '/admin/users/' + id + '/admin', {
+    method:'PATCH', headers: authHeaders(),
+    body: JSON.stringify({ is_admin: isAdmin })
+  });
+  const json = await res.json();
+  toast(json.success ? 'success' : 'error', json.message || json.error);
+  if (json.success) switchTab('users');
+}
+
+async function reviewListing(id, action) {
+  const note = action === 'rejected' ? (prompt('驳回原因（选填）：') || '') : '';
+  const res = await fetch(API + '/admin/listings/' + id + '/review', {
+    method:'PATCH', headers: authHeaders(),
+    body: JSON.stringify({ review_status: action, note })
+  });
+  const json = await res.json();
+  toast(json.success ? 'success' : 'error', json.message || json.error);
+  if (json.success) switchTab('listings');
+}
+
+async function deleteListing(id) {
+  if (!confirm('确认删除该供需信息？此操作不可逆。')) return;
+  const res = await fetch(API + '/admin/listings/' + id, {
+    method:'DELETE', headers: authHeaders()
+  });
+  const json = await res.json();
+  toast(json.success ? 'success' : 'error', json.message || json.error);
+  if (json.success) switchTab('listings');
+}
+
+async function handleReport(id, status) {
+  const note = status === 'resolved' ? (prompt('处理备注（选填）：') || '') : (prompt('驳回理由（选填）：') || '');
+  const res = await fetch(API + '/admin/reports/' + id, {
+    method:'PATCH', headers: authHeaders(),
+    body: JSON.stringify({ status, note })
+  });
+  const json = await res.json();
+  toast(json.success ? 'success' : 'error', json.message || json.error);
+  if (json.success) switchTab('reports');
+}
+
+async function showUserDetail(id) {
+  const res = await fetch(API + '/admin/users/' + id, { headers: authHeaders() });
+  const json = await res.json();
+  if (!json.success) { toast('error', json.error); return; }
+  const u = json.data;
+
+  let html = `<h3>用户详情 - ${esc(u.name)}</h3>`;
+  html += '<div class="row"><div><label>ID</label><div class="val">' + u.id + '</div></div><div><label>角色</label><div class="val">' + esc(u.role) + '</div></div></div>';
+  html += '<div class="row"><div><label>公司</label><div class="val">' + esc(u.company || '-') + '</div></div><div><label>地区</label><div class="val">' + esc(u.location || '-') + '</div></div></div>';
+  html += '<div class="row"><div><label>手机</label><div class="val">' + esc(u.phone || '-') + '</div></div><div><label>状态</label><div class="val">' + (u.status === 'active' ? '正常' : '已冻结') + '</div></div></div>';
+  html += '<div class="row"><div><label>注册时间</label><div class="val">' + formatDate(u.created_at) + '</div></div><div><label>发布数</label><div class="val">' + u.listing_count + '（活跃 ' + u.active_listings + '）</div></div></div>';
+
+  if (u.reports && u.reports.length) {
+    html += '<h4 style="margin-top:16px">被举报记录</h4>';
+    u.reports.forEach(r => {
+      html += `<div style="padding:8px;background:#fef7e0;border-radius:4px;margin-bottom:4px;font-size:13px">`;
+      html += `<strong>${esc(r.reporter_name)}</strong> 举报: ${esc(r.reason)} | ${esc(r.detail || '')} | ${formatDate(r.created_at)}`;
+      html += `</div>`;
+    });
+  }
+
+  const modalOverlay = document.getElementById('modalOverlay');
+  document.getElementById('modalBox').innerHTML = html + '<div class="actions"><button class="btn btn-ghost" onclick="closeModal()">关闭</button></div>';
+  modalOverlay.classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('active');
+}
+
+async function exportCSV(type) {
+  try {
+    const res = await fetch(API + '/admin/export/' + type, { headers: authHeaders() });
+    if (!res.ok) { toast('error', '导出失败'); return; }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = type + '_' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('success', '导出成功');
+  } catch(e) {
+    toast('error', '导出失败: ' + e.message);
+  }
+}
+
+// ============================================================
+// Utils
+// ============================================================
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function formatDate(d) { if (!d) return '-'; return d.replace('T',' ').substring(0,16); }
+
+function toast(type, msg) {
+  const el = document.createElement('div');
+  el.className = 'toast toast-' + type;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// Close modal on overlay click
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// Init: check for stored token
+if (localStorage.getItem('admin_token')) {
+  TOKEN = localStorage.getItem('admin_token');
+  // Try to restore session (token may be expired, handled by API 401)
+}
+</script>
+</body>
+</html>

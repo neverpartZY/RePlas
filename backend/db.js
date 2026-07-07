@@ -293,6 +293,17 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_intents_match ON deal_intents(match_id);
 `);
 
+// 迁移 deal_intents: intent_type → status (向前兼容旧 schema)
+const dealCols = db.prepare("PRAGMA table_info(deal_intents)").all().map(c => c.name);
+if (!dealCols.includes('status')) {
+  db.exec("ALTER TABLE deal_intents ADD COLUMN status TEXT DEFAULT 'intent' CHECK(status IN ('intent','negotiating','deal','completed','cancelled'))");
+  // 从 intent_type 迁移已有数据
+  if (dealCols.includes('intent_type')) {
+    db.exec("UPDATE deal_intents SET status = intent_type WHERE status = 'intent' AND intent_type IS NOT NULL AND intent_type != 'intent'");
+  }
+  console.log('[DB] Migrated deal_intents: added status column');
+}
+
 // images 独立表（便于审核和CDN管理）
 db.exec(`
   CREATE TABLE IF NOT EXISTS upload_images (
@@ -352,18 +363,29 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_users_status ON users(status);
   CREATE INDEX IF NOT EXISTS idx_users_phone ON users(phone);
   CREATE INDEX IF NOT EXISTS idx_listings_review ON listings(review_status);
+  CREATE INDEX IF NOT EXISTS idx_listings_created ON listings(created_at);
+  CREATE INDEX IF NOT EXISTS idx_listings_user ON listings(user_id);
+  CREATE INDEX IF NOT EXISTS idx_listings_status ON listings(status);
+  CREATE INDEX IF NOT EXISTS idx_deal_intents_status ON deal_intents(status);
+  CREATE INDEX IF NOT EXISTS idx_deal_intents_initiator ON deal_intents(initiator_id);
+  CREATE INDEX IF NOT EXISTS idx_deal_intents_counterparty ON deal_intents(counterparty_id);
+  CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id);
+  CREATE INDEX IF NOT EXISTS idx_price_history_date ON price_history(recorded_date);
 `);
 
-// Seed admin user if not exists (username: admin, password: admin123)
+// Seed admin user if not exists
 const adminExists = db.prepare('SELECT id FROM users WHERE is_admin = 1').get();
 if (!adminExists) {
   const bcrypt = require('bcryptjs');
-  const hash = bcrypt.hashSync('admin123', 10);
+  const { randomBytes } = require('crypto');
+  const adminPassword = process.env.ADMIN_INIT_PASSWORD || randomBytes(12).toString('hex');
+  const hash = bcrypt.hashSync(adminPassword, 10);
   db.prepare(`INSERT INTO users (name, role, location, password_hash, phone, company, is_admin, status)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).run(
     'admin', '管理员', '深圳', hash, '', '再塑通平台', 1, 'active'
   );
-  console.log('[DB] Seeded admin user (admin / admin123)');
+  console.log(`[DB] Seeded admin user. Password: ${adminPassword}`);
+  console.log('[DB] ⚠️  请立即记录密码并设置 ADMIN_INIT_PASSWORD 环境变量');
 }
 
 // Seed prices if empty

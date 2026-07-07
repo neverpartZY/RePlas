@@ -152,7 +152,7 @@ async function runAllScrapers() {
     if (cleaned.changes > 0) {
       console.log(`[ScraperManager] Cleaned ${cleaned.changes} expired listings`);
     }
-  } catch (e) {}
+  } catch (e) { console.error('[ScraperManager] Cleanup error:', e.message); }
 
   stats.lastRun = new Date().toISOString();
   stats.duration = Date.now() - startTime;

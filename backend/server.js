@@ -63,14 +63,25 @@ app.use((req, res, next) => {
 });
 
 // Rate limiting
-const limiter = rateLimit({
+const generalLimiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 60000,
   max: parseInt(process.env.RATE_LIMIT_MAX, 10) || 100,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: '请求过于频繁，请稍后再试' },
 });
-app.use(limiter);
+app.use(generalLimiter);
+
+// 登录/注册接口独立限流 — 5次/分钟防止暴力破解
+const authLimiter = rateLimit({
+  windowMs: 60000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: '登录尝试过于频繁，请1分钟后再试' },
+});
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
 
 // Content-Type check (skip for image upload routes)
 app.use((req, res, next) => {
@@ -193,6 +204,15 @@ const wss = new WebSocketServer({ server, path: '/ws' });
 const wsClients = new Map();
 
 wss.on('connection', (ws, req) => {
+  // Origin 校验 — 防止跨站 WebSocket 攻击
+  const allowedOrigins = (process.env.WS_ALLOWED_ORIGINS || 'http://localhost:3456,http://localhost:8080,http://127.0.0.1:3456').split(',').map(s => s.trim());
+  const origin = req.headers.origin || '';
+  if (origin && !allowedOrigins.includes(origin)) {
+    console.warn('[WS] Rejected connection from untrusted origin:', origin);
+    ws.close(4001, 'Untrusted origin');
+    return;
+  }
+
   console.log('[WS] New connection');
 
   ws.isAlive = true;
@@ -265,5 +285,26 @@ server.listen(PORT, () => {
     console.warn(`[server] Scraper scheduler failed to start: ${e.message}`);
   }
 });
+
+// ---- Graceful Shutdown ------------------------------------------------------
+function shutdown(signal) {
+  console.log(`\n[server] Received ${signal}, shutting down gracefully...`);
+  clearInterval(heartbeat);
+  wss.clients.forEach((ws) => {
+    ws.close(1001, 'Server shutting down');
+  });
+  server.close(() => {
+    console.log('[server] HTTP server closed');
+    try { db.close(); console.log('[server] Database closed'); } catch (e) {}
+    process.exit(0);
+  });
+  // 强制退出保护
+  setTimeout(() => {
+    console.error('[server] Forced shutdown after timeout');
+    process.exit(1);
+  }, 10000);
+}
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
 
 module.exports = app;

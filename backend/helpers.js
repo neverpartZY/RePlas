@@ -10,8 +10,8 @@
 function sanitize(value) {
   if (typeof value !== 'string') return value;
   let str = value.replace(/<[^>]*>/g, '');
-  // Fix 4: strip control characters (including null bytes) to prevent injection
-  str = str.replace(/[\x00-\x1F\x7F]/g, '');
+  // Strip control characters except \t (0x09), \n (0x0A), \r (0x0D)
+  str = str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
   return str;
 }
 
@@ -113,6 +113,22 @@ function validatePhone(phone) {
 
 const VALID_LISTING_STATUSES = ['active', 'fulfilled', 'closed', 'cancelled'];
 
+// ---- JSON helpers ------------------------------------------------------------
+
+/**
+ * Safely parse a JSON string, returning fallback on failure.
+ */
+function safeJSON(str, fallback) {
+  try { return JSON.parse(str); } catch (e) { return fallback; }
+}
+
+/**
+ * Safely stringify, returning '{}' on failure.
+ */
+function safeStringify(obj) {
+  try { return JSON.stringify(obj); } catch (e) { return '{}'; }
+}
+
 module.exports = {
   sanitize,
   sanitizeObject,
@@ -121,6 +137,8 @@ module.exports = {
   checkLengthLimits,
   validateEmail,
   validatePhone,
+  safeJSON,
+  safeStringify,
   LENGTH_LIMITS,
   MAX_PRICE,
   MAX_QUANTITY,

@@ -5,8 +5,18 @@
 
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'zaisutong_jwt_secret_2026_prod';
+const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+
+// 生产环境强制检查 JWT_SECRET 已设置
+if (!JWT_SECRET) {
+  console.error('');
+  console.error('❌ FATAL: JWT_SECRET 环境变量未设置！');
+  console.error('   export JWT_SECRET=$(openssl rand -base64 48)');
+  console.error('   或: set JWT_SECRET=your-secret-key');
+  console.error('');
+  process.exit(1);
+}
 
 /**
  * 签发 JWT Token

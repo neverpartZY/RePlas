@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const { requireAuth } = require('../middleware/auth');
 const { computeMatches } = require('../match_engine');
 const {
   sanitizeObject,
@@ -256,14 +257,14 @@ router.get('/:id', (req, res) => {
 });
 
 // ====================== 更新供需 ======================
-router.patch('/:id', (req, res) => {
+router.patch('/:id', requireAuth, (req, res) => {
   try {
     const existing = db.prepare('SELECT * FROM listings WHERE id = ?').get(req.params.id);
     if (!existing) {
       return res.status(404).json({ success: false, error: '供需不存在' });
     }
-    if (req.body._userId && existing.user_id !== req.body._userId) {
-      return res.status(403).json({ success: false, error: '无权修改' });
+    if (existing.user_id !== req.user.userId) {
+      return res.status(403).json({ success: false, error: '无权修改他人的供需' });
     }
 
     // 验证
@@ -382,7 +383,7 @@ router.post('/:id/intent', (req, res) => {
       db.prepare(
         "INSERT INTO notifications (user_id, type, title, body, link_type, link_id) VALUES (?,'deal','撮合更新',?, 'listing', ?)"
       ).run(listing.user_id, `"${listing.material}" 状态更新：${intentLabels[intentType]}`, req.params.id);
-    } catch (e) {}
+    } catch (e) { console.error('[Listings] notify error:', e.message); }
 
     res.json({ success: true, intent });
   } catch (err) {
@@ -431,7 +432,7 @@ function pushNotification(userId, notification) {
     if (!wsClients) return;
     const ws = wsClients.get(userId);
     if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'new_notification', notification }));
-  } catch (e) {}
+  } catch (e) { /* WS may be unavailable — non-critical */ }
 }
 
 module.exports = router;

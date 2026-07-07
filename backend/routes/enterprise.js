@@ -4,6 +4,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const { requireAuth } = require('../middleware/auth');
 
 function safeJSON(str, fallback) {
   try { return JSON.parse(str); } catch (e) { return fallback; }
@@ -50,11 +51,11 @@ router.get('/profile/:userId?', (req, res) => {
 });
 
 // ====================== 更新企业档案 ======================
-router.patch('/profile', (req, res) => {
+router.patch('/profile', requireAuth, (req, res) => {
   try {
-    const { userId, capacity, processType, certifications, businessScope,
+    const userId = req.user.userId;
+    const { capacity, processType, certifications, businessScope,
             establishedYear, employeeCount, wechatId, company, location } = req.body;
-    if (!userId) return res.status(400).json({ success: false, error: 'userId 必填' });
 
     const updates = [];
     const params = [];
@@ -75,7 +76,7 @@ router.patch('/profile', (req, res) => {
     params.push(userId);
     db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).run(...params);
 
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+    const user = db.prepare('SELECT id, name, role, location, company, is_admin, status, created_at, avatar, capacity, process_type, certifications, business_scope, established_year, employee_count, wechat_id, dual_roles FROM users WHERE id = ?').get(userId);
     user.certifications = safeJSON(user.certifications, []);
     user.dual_roles = safeJSON(user.dual_roles, []);
 
@@ -87,11 +88,12 @@ router.patch('/profile', (req, res) => {
 });
 
 // ====================== 样本墙: 添加产品样本 ======================
-router.post('/samples', (req, res) => {
+router.post('/samples', requireAuth, (req, res) => {
   try {
-    const { userId, title, category, form, specImageUrls, specCard, price, description } = req.body;
-    if (!userId || !title || !category) {
-      return res.status(400).json({ success: false, error: 'userId, title, category 为必填' });
+    const userId = req.user.userId;
+    const { title, category, form, specImageUrls, specCard, price, description } = req.body;
+    if (!title || !category) {
+      return res.status(400).json({ success: false, error: 'title, category 为必填' });
     }
 
     const imgUrls = specImageUrls ? (typeof specImageUrls === 'string' ? specImageUrls : JSON.stringify(specImageUrls)) : '[]';
@@ -113,12 +115,13 @@ router.post('/samples', (req, res) => {
 });
 
 // ====================== 评价: 添加评价 ======================
-router.post('/evaluations', (req, res) => {
+router.post('/evaluations', requireAuth, (req, res) => {
   try {
-    const { reviewerId, targetUserId, listingId, matchId,
+    const reviewerId = req.user.userId;
+    const { targetUserId, listingId, matchId,
             ratingQuality, ratingIntegrity, ratingSpeed, comment, tags } = req.body;
-    if (!reviewerId || !targetUserId) {
-      return res.status(400).json({ success: false, error: 'reviewerId, targetUserId 为必填' });
+    if (!targetUserId) {
+      return res.status(400).json({ success: false, error: 'targetUserId 为必填' });
     }
 
     // 同一笔交易只能评价一次

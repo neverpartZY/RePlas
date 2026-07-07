@@ -183,7 +183,7 @@ router.post('/', requireAuth, (req, res) => {
     // 创建通知
     if (counterpartyId) {
       db.prepare(`
-        INSERT INTO notifications (user_id, type, title, content, link_type, link_id)
+        INSERT INTO notifications (user_id, type, title, body, link_type, link_id)
         VALUES (?, 'deal', '新交易意向', ?, 'deal', ?)
       `).run(counterpartyId, `${req.user.name || '对方'} 发起了交易意向，请查看并回复`, result.lastInsertRowid);
     }
@@ -203,13 +203,20 @@ router.patch('/:id', requireAuth, (req, res) => {
 
     const { status, price_agreed, quantity_agreed, delivery_date, note, status_note } = req.body;
 
-    // 校验状态流转
-    if (status && !VALID_STATUSES.includes(status)) {
-      return res.status(400).json({ success: false, error: '无效的状态值' });
-    }
+    // 校验状态流转合法性
+    const ALLOWED_TRANSITIONS = {
+      'intent': ['negotiating', 'cancelled'],
+      'negotiating': ['deal', 'cancelled', 'intent'],
+      'deal': ['completed', 'cancelled'],
+      'cancelled': [],       // 已取消不可恢复
+      'completed': [],       // 已完成不可恢复
+    };
 
-    if (status && status === 'intent' && deal.status !== 'intent') {
-      return res.status(400).json({ success: false, error: '只能从意向状态开始' });
+    if (status && (!ALLOWED_TRANSITIONS[deal.status] || !ALLOWED_TRANSITIONS[deal.status].includes(status))) {
+      return res.status(400).json({
+        success: false,
+        error: `不允许从「${deal.status}」变更为「${status}」`
+      });
     }
 
     const updates = [];
@@ -234,7 +241,7 @@ router.patch('/:id', requireAuth, (req, res) => {
     if (status && counterpartyId) {
       const statusLabels = { intent: '意向确认', negotiating: '洽谈中', deal: '已成交', completed: '已完成', cancelled: '已取消' };
       db.prepare(`
-        INSERT INTO notifications (user_id, type, title, content, link_type, link_id)
+        INSERT INTO notifications (user_id, type, title, body, link_type, link_id)
         VALUES (?, 'deal', '交易状态更新', ?, 'deal', ?)
       `).run(counterpartyId, `交易已更新为「${statusLabels[status] || status}」`, req.params.id);
     }

@@ -9,3 +9,19 @@ test_login.json
 _run.js
 .DS_Store
 .env
+.env.local
+# PM2
+logs/
+pm2*.log
+.pm2/
+# Test coverage
+coverage/
+.nyc_output/
+# Build artifacts
+dist/
+build/
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

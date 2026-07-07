@@ -447,7 +447,7 @@ async function loadLogs(container, params) {
 
   json.data.items.forEach(l => {
     let detailStr = '-';
-    try { const d = JSON.parse(l.detail); detailStr = JSON.stringify(d).substring(0, 100); } catch(e) {}
+    try { const d = JSON.parse(l.detail); detailStr = JSON.stringify(d).substring(0, 100); } catch(e) { detailStr = String(l.detail || '-').substring(0, 100); }
     html += '<tr>';
     html += `<td>${l.id}</td>`;
     html += `<td>${esc(l.admin_name)}</td>`;

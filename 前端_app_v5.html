@@ -1401,7 +1401,8 @@ function escapeHtml(str) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replace(/'/g, '&#39;')
+    .replace(/`/g, '&#96;');
 }
 
 /* ===================================================================
@@ -1841,15 +1842,7 @@ function saveSession() {
       userCompany: state.userCompany,
       token: state.token,
     }));
-  } catch(e) {}
-}
-
-function loadSession() {
-  // Also load vision history
-  try {
-    const vh = localStorage.getItem('zs5_vision_history');
-    if (vh) state._visionHistory = JSON.parse(vh);
-  } catch(e) {}
+  } catch(e) { /* localStorage may be unavailable in private mode */ }
 
   try {
     const d = JSON.parse(localStorage.getItem('zs5_session'));
@@ -1863,10 +1856,7 @@ function loadSession() {
       state.userCompany = d.userCompany || '';
       state.token = d.token || null;
     }
-  } catch(e) {}
-}
-
-function isLoggedIn() {
+  } catch(e) { /* localStorage parse error — session reset */ }
   return !!(state.token && state.userId && state.userName && state.userRole);
 }
 
@@ -2474,7 +2464,7 @@ async function loadPriceSnapshot() {
         </span>`;
       }).join('');
     }
-  } catch (e) {}
+  } catch (e) { console.error('loadXxxPage error:', e); }
 }
 
 async function loadMatchPage() {
@@ -2966,8 +2956,7 @@ async function startChatFromDeal(dealId, targetUserId) {
       state._entReturnTab = 'deals';
       switchTab('chat');
     }
-  } catch (e) {}
-}
+  } catch (e) { console.error('startChat error:', e); }
 
 async function loadDealBadge() {
   if (!isLoggedIn()) return;
@@ -2975,7 +2964,7 @@ async function loadDealBadge() {
     const res = await api('/api/deal-intents?status=intent&limit=1');
     const badge = document.getElementById('dealBadge');
     if (badge) badge.classList.toggle('show', res.deals && res.deals.length > 0);
-  } catch (e) {}
+  } catch (e) { /* badge load is non-critical */ }
 }
 
 /* ===================================================================
@@ -3316,12 +3305,13 @@ async function analyzeVisionImage() {
       renderVisionResult(data);
       // Save to local history
       if (!state._visionHistory) state._visionHistory = [];
+      const vd = data.data || {};
       state._visionHistory.unshift({
-        material: data.material || '未知',
-        color: data.color || '未知',
-        form: data.form || '未知',
-        purity: data.purity || 0,
-        confidence: data.confidence || 0,
+        material: vd.category || '未知',
+        color: vd.color || '未知',
+        form: vd.form || '未知',
+        purity: vd.purity || 0,
+        confidence: vd.confidence || 0,
         time: Date.now()
       });
       if (state._visionHistory.length > 20) state._visionHistory = state._visionHistory.slice(0, 20);
@@ -3337,16 +3327,17 @@ async function analyzeVisionImage() {
 
 function renderVisionResult(data) {
   const body = document.getElementById('visionResultBody');
-  const confPct = data.confidence ? Math.round(data.confidence) : 0;
+  const vd = data.data || {};
+  const confPct = vd.confidence ? Math.round(vd.confidence) : 0;
   const confStr = confPct >= 70 ? '高' : confPct >= 40 ? '中' : '低';
   const confColor = confPct >= 70 ? 'var(--primary)' : confPct >= 40 ? '#e65100' : 'var(--text-hint)';
 
   body.innerHTML = `
-    <div class="result-row"><span class="label">品类</span><span class="value">${escapeHtml(data.material || '未知')}</span><span class="conf" style="color:${confColor}">置信度 ${confPct}% (${confStr})</span></div>
-    <div class="result-row"><span class="label">颜色</span><span class="value">${escapeHtml(data.color || '未知')}</span></div>
-    <div class="result-row"><span class="label">形态</span><span class="value">${escapeHtml(data.form || '未知')}</span></div>
-    <div class="result-row"><span class="label">纯度</span><span class="value">${data.purity ? data.purity + '%' : '未知'}</span></div>
-    ${data.notes ? '<div style="padding:8px;background:var(--bg);border-radius:4px;margin-top:8px;font-size:12px;color:var(--text-secondary)">📝 ' + escapeHtml(data.notes) + '</div>' : ''}
+    <div class="result-row"><span class="label">品类</span><span class="value">${escapeHtml(vd.category || '未知')}</span><span class="conf" style="color:${confColor}">置信度 ${confPct}% (${confStr})</span></div>
+    <div class="result-row"><span class="label">颜色</span><span class="value">${escapeHtml(vd.color || '未知')}</span></div>
+    <div class="result-row"><span class="label">形态</span><span class="value">${escapeHtml(vd.form || '未知')}</span></div>
+    <div class="result-row"><span class="label">纯度</span><span class="value">${vd.purity ? vd.purity + '%' : '未知'}</span></div>
+    ${vd.notes ? '<div style="padding:8px;background:var(--bg);border-radius:4px;margin-top:8px;font-size:12px;color:var(--text-secondary)">📝 ' + escapeHtml(vd.notes) + '</div>' : ''}
   `;
   document.getElementById('visionResult').classList.add('show');
 }
@@ -3354,17 +3345,17 @@ function renderVisionResult(data) {
 function fillFormFromVision() {
   if (!_visionResult || !_visionResult.success) { showToast('无识别结果', 'error'); return; }
 
-  const data = _visionResult;
+  const vd = _visionResult.data || {};
   const materialText = [
-    data.material || '',
-    data.color || '',
-    data.form || ''
+    vd.category || '',
+    vd.color || '',
+    vd.form || ''
   ].filter(Boolean).join(' ');
 
   // Navigate to home and fill the input
   switchTab('home');
   const aiInput = document.getElementById('aiInput');
-  aiInput.value = '我有' + materialText + (data.purity ? ' 纯度' + data.purity + '%' : '');
+  aiInput.value = '我有' + materialText + (vd.purity ? ' 纯度' + vd.purity + '%' : '');
   aiInput.focus();
 
   // Optionally auto-submit
@@ -3777,7 +3768,7 @@ async function loadRegionalHeatmap() {
     try {
       const vh = localStorage.getItem('zs5_vision_history');
       if (vh) state._visionHistory = JSON.parse(vh);
-    } catch(e) {}
+    } catch(e) { /* vision history parse error */ }
   };
   // We'll override loadSession at the end
 })();
@@ -3788,7 +3779,7 @@ function saveVisionHistory() {
     if (state._visionHistory) {
       localStorage.setItem('zs5_vision_history', JSON.stringify(state._visionHistory.slice(0, 20)));
     }
-  } catch(e) {}
+  } catch(e) { /* localStorage may be full/unavailable */ }
 }
 
 

@@ -42,6 +42,49 @@ router.get('/conversations', requireAuth, (req, res) => {
 });
 
 // ================================================================
+// POST /api/messages/conversations — 创建/获取与指定用户的会话
+// ================================================================
+router.post('/conversations', requireAuth, (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { participant_id } = req.body;
+
+    if (!participant_id) {
+      return res.status(400).json({ success: false, error: 'participant_id 为必填项' });
+    }
+
+    // 验证对方用户存在
+    const participant = db.prepare('SELECT id, name FROM users WHERE id = ?').get(participant_id);
+    if (!participant) {
+      return res.status(404).json({ success: false, error: '用户不存在' });
+    }
+
+    if (userId === participant_id) {
+      return res.status(400).json({ success: false, error: '不能与自己创建会话' });
+    }
+
+    // 生成会话 ID（双方 userId 排序后拼接）
+    const ids = [userId, participant_id].sort((a, b) => a - b);
+    const conversationId = `conv_${ids[0]}_${ids[1]}`;
+
+    // 检查是否已有消息（已有会话则直接返回）
+    const existing = db.prepare(
+      'SELECT id FROM messages WHERE conversation_id = ? LIMIT 1'
+    ).get(conversationId);
+
+    res.json({
+      success: true,
+      conversationId,
+      participant: { id: participant.id, name: participant.name },
+      isNew: !existing,
+    });
+  } catch (err) {
+    console.error('[messages] create conversation error:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ================================================================
 // GET /api/messages/:conversationId — 获取某个会话的消息列表
 // ================================================================
 router.get('/:conversationId', requireAuth, (req, res) => {

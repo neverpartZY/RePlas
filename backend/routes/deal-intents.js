@@ -13,36 +13,7 @@ const router = express.Router();
 const db = require('../db');
 const { optionalAuth, requireAuth } = require('../middleware/auth');
 
-// 确保表结构包含新字段
-db.exec(`
-  CREATE TABLE IF NOT EXISTS deal_intents (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    match_id INTEGER,
-    supply_id INTEGER,
-    demand_id INTEGER,
-    initiator_id INTEGER NOT NULL,
-    counterparty_id INTEGER,
-    status TEXT DEFAULT 'intent' CHECK(status IN ('intent','negotiating','deal','completed','cancelled')),
-    price_agreed REAL,
-    quantity_agreed REAL,
-    delivery_date TEXT,
-    note TEXT DEFAULT '',
-    status_note TEXT DEFAULT '',
-    created_at TEXT DEFAULT (datetime('now')),
-    updated_at TEXT DEFAULT (datetime('now'))
-  )
-`);
-
-// 检查并添加缺失的列（向前兼容）
-const cols = db.prepare("PRAGMA table_info(deal_intents)").all().map(c => c.name);
-if (!cols.includes('supply_id')) db.exec("ALTER TABLE deal_intents ADD COLUMN supply_id INTEGER");
-if (!cols.includes('demand_id')) db.exec("ALTER TABLE deal_intents ADD COLUMN demand_id INTEGER");
-if (!cols.includes('initiator_id')) db.exec("ALTER TABLE deal_intents ADD COLUMN initiator_id INTEGER");
-if (!cols.includes('counterparty_id')) db.exec("ALTER TABLE deal_intents ADD COLUMN counterparty_id INTEGER");
-if (!cols.includes('price_agreed')) db.exec("ALTER TABLE deal_intents ADD COLUMN price_agreed REAL");
-if (!cols.includes('quantity_agreed')) db.exec("ALTER TABLE deal_intents ADD COLUMN quantity_agreed REAL");
-if (!cols.includes('delivery_date')) db.exec("ALTER TABLE deal_intents ADD COLUMN delivery_date TEXT");
-if (!cols.includes('status_note')) db.exec("ALTER TABLE deal_intents ADD COLUMN status_note TEXT DEFAULT ''");
+// 表结构及迁移逻辑已统一移至 db.js，此处不再重复定义
 
 const VALID_STATUSES = ['intent', 'negotiating', 'deal', 'completed', 'cancelled'];
 

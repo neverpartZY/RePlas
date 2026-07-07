@@ -448,6 +448,16 @@ function getSpreadInsight(category, recycledPrice, newMaterialPrice) {
   return `再生料比新料低 ${pct}%，价差较小，品质可能是更重要的决策因素`;
 }
 
+// ---- 品类匹配模式（heatmap 辅助） ----
+const CATEGORY_PATTERNS = [
+  { regex: /\b(PET|pet)\b/i, category: 'PET' },
+  { regex: /\b(HDPE|hdpe|低压)\b/i, category: 'HDPE' },
+  { regex: /\b(PP|pp|聚丙|ABS|abs)\b/i, category: 'PP' },
+  { regex: /\b(LDPE|ldpe|高压)\b/i, category: 'LDPE' },
+  { regex: /\bABS|abs\b/i, category: 'ABS' },
+  { regex: /\bPC|pc|聚碳\b/i, category: 'PC' },
+];
+
 // ---- GET /api/pricing/heatmap — 区域热力图数据 ----
 router.get('/heatmap', (req, res) => {
   try {
@@ -571,18 +581,5 @@ router.get('/trends-extended', (req, res) => {
     res.status(500).json({ success: false, error: '服务器错误' });
   }
 });
-
-// ---- 品类模式辅助 ----
-const CATEGORY_PATTERNS = [
-  { regex: /\b(PET|pet)\b/i, category: 'PET' },
-  { regex: /\b(HDPE|hdpe|低压)\b/i, category: 'HDPE' },
-  { regex: /\b(PP|pp|聚丙|ABS|abs)\b/i, category: 'PP' },
-  { regex: /\b(LDPE|ldpe|高压)\b/i, category: 'LDPE' },
-  { regex: /\bABS|abs\b/i, category: 'ABS' },
-  { regex: /\bPC|pc|聚碳\b/i, category: 'PC' },
-];
-
-// 确保 heatmap 路由排在 /:id 之前
-// (already defined above, just documenting the ordering requirement)
 
 module.exports = router;

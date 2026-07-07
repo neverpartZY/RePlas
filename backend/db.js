@@ -274,34 +274,56 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_price_hist_region ON price_history(region, recorded_date);
 `);
 
-// 撮合意向追踪
+// 交易意向追踪 (v5.1 统一 schema: db.js 为唯一定义源)
 db.exec(`
   CREATE TABLE IF NOT EXISTS deal_intents (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    match_id INTEGER,                     -- 关联匹配
-    listing_id INTEGER NOT NULL,          -- 关联供需
-    user_id INTEGER NOT NULL,             -- 操作人
-    intent_type TEXT NOT NULL,            -- interested | negotiating | deal | completed | cancelled
+    match_id INTEGER,
+    supply_id INTEGER,
+    demand_id INTEGER,
+    initiator_id INTEGER NOT NULL,
+    counterparty_id INTEGER,
+    status TEXT DEFAULT 'intent' CHECK(status IN ('intent','negotiating','deal','completed','cancelled')),
+    price_agreed REAL,
+    quantity_agreed REAL,
+    delivery_date TEXT,
     note TEXT DEFAULT '',
+    status_note TEXT DEFAULT '',
     created_at TEXT DEFAULT (datetime('now')),
-    updated_at TEXT DEFAULT (datetime('now')),
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (listing_id) REFERENCES listings(id)
+    updated_at TEXT DEFAULT (datetime('now'))
   );
 
-  CREATE INDEX IF NOT EXISTS idx_intents_user ON deal_intents(user_id);
+  CREATE INDEX IF NOT EXISTS idx_intents_initiator ON deal_intents(initiator_id);
+  CREATE INDEX IF NOT EXISTS idx_intents_counterparty ON deal_intents(counterparty_id);
   CREATE INDEX IF NOT EXISTS idx_intents_match ON deal_intents(match_id);
+  CREATE INDEX IF NOT EXISTS idx_intents_status ON deal_intents(status);
 `);
 
-// 迁移 deal_intents: intent_type → status (向前兼容旧 schema)
+// 向前兼容：为旧 schema 的表补齐缺失列
 const dealCols = db.prepare("PRAGMA table_info(deal_intents)").all().map(c => c.name);
-if (!dealCols.includes('status')) {
-  db.exec("ALTER TABLE deal_intents ADD COLUMN status TEXT DEFAULT 'intent' CHECK(status IN ('intent','negotiating','deal','completed','cancelled'))");
-  // 从 intent_type 迁移已有数据
-  if (dealCols.includes('intent_type')) {
-    db.exec("UPDATE deal_intents SET status = intent_type WHERE status = 'intent' AND intent_type IS NOT NULL AND intent_type != 'intent'");
+const migrationMap = [
+  ['supply_id',       'INTEGER'],
+  ['demand_id',       'INTEGER'],
+  ['initiator_id',    'INTEGER'],
+  ['counterparty_id', 'INTEGER'],
+  ['price_agreed',    'REAL'],
+  ['quantity_agreed', 'REAL'],
+  ['delivery_date',   'TEXT'],
+  ['status_note',     "TEXT DEFAULT ''"],
+  ['status',          "TEXT DEFAULT 'intent' CHECK(status IN ('intent','negotiating','deal','completed','cancelled'))"],
+];
+for (const [col, type] of migrationMap) {
+  if (!dealCols.includes(col)) {
+    db.exec(`ALTER TABLE deal_intents ADD COLUMN ${col} ${type}`);
+    console.log(`[DB] Migrated deal_intents: added ${col}`);
   }
-  console.log('[DB] Migrated deal_intents: added status column');
+}
+
+// 将旧的 intent_type 数据迁移到 status
+if (dealCols.includes('intent_type')) {
+  try {
+    db.exec("UPDATE deal_intents SET status = intent_type WHERE intent_type IS NOT NULL AND intent_type != status");
+  } catch (e) { /* 忽略迁移错误 */ }
 }
 
 // images 独立表（便于审核和CDN管理）

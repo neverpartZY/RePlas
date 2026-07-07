@@ -76,7 +76,7 @@ router.patch('/profile', requireAuth, (req, res) => {
     params.push(userId);
     db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).run(...params);
 
-    const user = db.prepare('SELECT id, name, role, location, company, is_admin, status, created_at, avatar, capacity, process_type, certifications, business_scope, established_year, employee_count, wechat_id, dual_roles FROM users WHERE id = ?').get(userId);
+    const user = db.prepare('SELECT id, name, role, location, company, is_admin, status, created_at, avatar_url AS avatar, capacity, process_type, certifications, business_scope, established_year, employee_count, wechat_id, dual_roles FROM users WHERE id = ?').get(userId);
     user.certifications = safeJSON(user.certifications, []);
     user.dual_roles = safeJSON(user.dual_roles, []);
 
@@ -110,6 +110,66 @@ router.post('/samples', requireAuth, (req, res) => {
     res.status(201).json({ success: true, sample });
   } catch (err) {
     console.error('[enterprise] sample error:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ====================== 样本墙: 编辑产品样本 ======================
+router.patch('/samples/:id', requireAuth, (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const sampleId = req.params.id;
+
+    // 所有权校验
+    const sample = db.prepare('SELECT * FROM enterprise_samples WHERE id = ?').get(sampleId);
+    if (!sample) return res.status(404).json({ success: false, error: '样本不存在' });
+    if (sample.user_id !== userId) return res.status(403).json({ success: false, error: '无权编辑' });
+
+    const { title, category, form, specImageUrls, specCard, price, description, status } = req.body;
+    const updates = [];
+    const params = [];
+
+    if (title !== undefined)          { updates.push('title = ?'); params.push(title); }
+    if (category !== undefined)       { updates.push('category = ?'); params.push(category); }
+    if (form !== undefined)           { updates.push('form = ?'); params.push(form); }
+    if (specImageUrls !== undefined)  { updates.push('spec_image_urls = ?');
+      params.push(typeof specImageUrls === 'string' ? specImageUrls : JSON.stringify(specImageUrls)); }
+    if (specCard !== undefined)       { updates.push('spec_card = ?');
+      params.push(typeof specCard === 'string' ? specCard : JSON.stringify(specCard)); }
+    if (price !== undefined)          { updates.push('price = ?'); params.push(price); }
+    if (description !== undefined)    { updates.push('description = ?'); params.push(description); }
+    if (status !== undefined)         { updates.push('status = ?'); params.push(status); }
+
+    if (!updates.length) return res.status(400).json({ success: false, error: '没有可更新的字段' });
+
+    params.push(sampleId);
+    db.prepare(`UPDATE enterprise_samples SET ${updates.join(', ')} WHERE id = ?`).run(...params);
+
+    const updated = db.prepare('SELECT * FROM enterprise_samples WHERE id = ?').get(sampleId);
+    updated.spec_image_urls = safeJSON(updated.spec_image_urls, []);
+    updated.spec_card = safeJSON(updated.spec_card, {});
+
+    res.json({ success: true, sample: updated });
+  } catch (err) {
+    console.error('[enterprise] sample update error:', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ====================== 样本墙: 删除产品样本（软删除） ======================
+router.delete('/samples/:id', requireAuth, (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const sampleId = req.params.id;
+
+    const sample = db.prepare('SELECT * FROM enterprise_samples WHERE id = ?').get(sampleId);
+    if (!sample) return res.status(404).json({ success: false, error: '样本不存在' });
+    if (sample.user_id !== userId) return res.status(403).json({ success: false, error: '无权删除' });
+
+    db.prepare("UPDATE enterprise_samples SET status = 'deleted' WHERE id = ?").run(sampleId);
+    res.json({ success: true, message: '样本已删除' });
+  } catch (err) {
+    console.error('[enterprise] sample delete error:', err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });

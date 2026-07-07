@@ -1047,7 +1047,7 @@ AI 将自动识别品类、数量、价格、地点
         <span class="value" style="color:var(--primary)">🔄 切换 ›</span>
       </div>
       <div class="divider"></div>
-      <div class="profile-row" id="profileLogout" role="button" tabindex="0" style="cursor:pointer;display:none" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="logout()">
+      <div class="profile-row" id="profileLogout" role="button" tabindex="0" style="cursor:pointer;display:none" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="confirmLogout()">
         <span class="label" style="color:var(--danger)">退出登录</span>
         <span class="value" style="color:var(--danger)">🚪 退出 ›</span>
       </div>
@@ -1072,6 +1072,15 @@ AI 将自动识别品类、数量、价格、地点
         <div class="icon">🤖</div>
         <div class="title">暂无解析记录</div>
         <div class="text">在首页输入供求信息即可</div>
+      </div>
+    </div>
+
+    <!-- Admin Portal -->
+    <div class="profile-section" id="profileAdminSection" style="display:none">
+      <h2 class="section-title">⚙️ 系统管理</h2>
+      <div class="profile-row" role="button" tabindex="0" style="cursor:pointer" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" onclick="window.open('/admin','_blank')">
+        <span class="label">管理后台</span>
+        <span class="value" style="color:var(--primary)">🔧 进入 ›</span>
       </div>
     </div>
 
@@ -1942,7 +1951,7 @@ function switchTab(tab) {
   if (tab === 'vision') loadVisionHistory();
   if (tab === 'enterprise') { loadEnterpriseProfile(); if (bottomNav) bottomNav.style.display = 'none'; }
   if (tab === 'deals') loadDealsPage();
-  if (tab === 'chat' && state._chatConversationId) loadChat(state._chatConversationId);
+  if (tab === 'chat' && state._chatConversationId) { loadChat(state._chatConversationId); if (bottomNav) bottomNav.style.display = 'none'; }
 }
 
 function refreshCurrentTab() {
@@ -2099,6 +2108,12 @@ function logout() {
   updateUserUI();
   showRegistration();
   showToast('已退出登录', '');
+}
+
+function confirmLogout() {
+  if (confirm('确定退出登录吗？')) {
+    logout();
+  }
 }
 
 function updateUserUI() {
@@ -2464,7 +2479,7 @@ async function loadPriceSnapshot() {
         </span>`;
       }).join('');
     }
-  } catch (e) { console.error('loadXxxPage error:', e); }
+  } catch (e) { console.error('loadPriceSnapshot error:', e); }
 }
 
 async function loadMatchPage() {
@@ -2789,6 +2804,11 @@ async function loadProfilePage() {
   // Show enterprise card entry for logged-in users
   const entSec = document.getElementById('profileEntSection');
   if (entSec) entSec.style.display = '';
+  // Show admin portal for admin users
+  const adminSec = document.getElementById('profileAdminSection');
+  if (adminSec) {
+    adminSec.style.display = (state.user && state.user.is_admin) ? '' : 'none';
+  }
 }
 
 async function renderMyListings() {
@@ -2957,6 +2977,7 @@ async function startChatFromDeal(dealId, targetUserId) {
       switchTab('chat');
     }
   } catch (e) { console.error('startChat error:', e); }
+}
 
 async function loadDealBadge() {
   if (!isLoggedIn()) return;

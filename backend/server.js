@@ -36,6 +36,7 @@ const externalRouter      = require('./routes/external');
 const enterpriseRouter    = require('./routes/enterprise');
 const dealIntentsRouter   = require('./routes/deal-intents');
 const terminologyRouter   = require('./routes/terminology');
+const reportsRouter       = require('./routes/reports');
 const scraperManager      = require('./scrapers/manager');
 
 // ---- App Setup -------------------------------------------------------------
@@ -146,45 +147,7 @@ app.use('/api/matches',       optionalAuth, matchesRouter);
 app.use('/api/messages',      requireAuth, messagesRouter);
 app.use('/api/notifications', requireAuth, notificationsRouter);
 app.use('/api/admin',         adminRouter);     // 管理后台（内部 requireAdmin）
-
-// 公开举报提交接口（需登录，无需管理员权限）
-app.post('/api/reports', requireAuth, (req, res) => {
-  try {
-    const { target_type, target_id, reason, detail } = req.body;
-    if (!target_type || !target_id || !reason) {
-      return res.status(400).json({ success: false, error: 'target_type, target_id, reason 为必填项' });
-    }
-    if (!['listing', 'user', 'message'].includes(target_type)) {
-      return res.status(400).json({ success: false, error: 'target_type 无效' });
-    }
-
-    // 检查目标是否存在
-    if (target_type === 'listing') {
-      const listing = db.prepare('SELECT id FROM listings WHERE id = ?').get(target_id);
-      if (!listing) return res.status(404).json({ success: false, error: '供需信息不存在' });
-    } else if (target_type === 'user') {
-      const user = db.prepare('SELECT id FROM users WHERE id = ?').get(target_id);
-      if (!user) return res.status(404).json({ success: false, error: '用户不存在' });
-    }
-
-    // 防止重复举报
-    const existing = db.prepare(
-      "SELECT id FROM reports WHERE reporter_id = ? AND target_type = ? AND target_id = ? AND status = 'pending'"
-    ).get(req.user.userId, target_type, target_id);
-    if (existing) {
-      return res.status(400).json({ success: false, error: '您已举报过该内容，请等待处理' });
-    }
-
-    const result = db.prepare(
-      'INSERT INTO reports (reporter_id, target_type, target_id, reason, detail) VALUES (?, ?, ?, ?, ?)'
-    ).run(req.user.userId, target_type, target_id, reason, detail || '');
-
-    res.json({ success: true, data: { id: result.lastInsertRowid } });
-  } catch (err) {
-    console.error('[Reports] Submit error:', err);
-    res.status(500).json({ success: false, error: '举报提交失败' });
-  }
-});
+app.use('/api/reports',       reportsRouter);   // 公开举报提交
 
 // ---- 404 -------------------------------------------------------------------
 app.use((req, res) => {

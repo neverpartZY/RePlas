@@ -168,9 +168,12 @@ const wsClients = new Map();
 
 wss.on('connection', (ws, req) => {
   // Origin 校验 — 防止跨站 WebSocket 攻击
-  const allowedOrigins = (process.env.WS_ALLOWED_ORIGINS || 'http://localhost:3456,http://localhost:8080,http://127.0.0.1:3456').split(',').map(s => s.trim());
+  // WS_ALLOWED_ORIGINS=* 允许所有（测试/ngrok），正式上线改为具体域名
+  const wsOriginsRaw = process.env.WS_ALLOWED_ORIGINS || 'http://localhost:3456,http://localhost:8080,http://127.0.0.1:3456';
+  const wsAllowAll = wsOriginsRaw === '*';
+  const allowedOrigins = wsAllowAll ? [] : wsOriginsRaw.split(',').map(s => s.trim());
   const origin = req.headers.origin || '';
-  if (origin && !allowedOrigins.includes(origin)) {
+  if (origin && !wsAllowAll && !allowedOrigins.includes(origin)) {
     console.warn('[WS] Rejected connection from untrusted origin:', origin);
     ws.close(4001, 'Untrusted origin');
     return;
@@ -235,10 +238,11 @@ app.set('wsClients', wsClients);
 
 // ---- Start -----------------------------------------------------------------
 server.listen(PORT, () => {
-  console.log(`[server] 再塑通 backend v5.0 已启动`);
-  console.log(`[server] HTTP:  http://localhost:${PORT}`);
-  console.log(`[server] WS:    ws://localhost:${PORT}/ws`);
-  console.log(`[server] API:   http://localhost:${PORT}/api`);
+  const isProd = process.env.NODE_ENV === 'production';
+  console.log(`[server] 再塑通 backend v5.0 已启动 (${isProd ? '生产' : '开发'}模式)`);
+  console.log(`[server] HTTP:  http://0.0.0.0:${PORT}`);
+  console.log(`[server] WS:    ws://0.0.0.0:${PORT}/ws`);
+  console.log('[server] DB:    ./data/zaisutong.db');
 
   // 启动外部数据采集定时调度
   try {

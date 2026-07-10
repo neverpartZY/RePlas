@@ -22,20 +22,24 @@ const VALID_FORMS = ['瓶砖', '瓶片', '破碎料', '打包料', '再生颗粒
 const VALID_CATEGORIES = ['PET', 'PP', 'PE', 'HDPE', 'LDPE', 'ABS', 'PS', 'PC', 'PA', 'POM', 'PVC', 'PA6', 'PA66', 'EPS', 'PMMA', 'EVA', 'TPU', '其他'];
 
 // ====================== 发布新供需 ======================
-router.post('/', (req, res) => {
+router.post('/', requireAuth, (req, res) => {
   try {
     const {
-      userId, type, wasteOrRecycled, material, form,
+      type, wasteOrRecycled, material, form,
       quantity, price, location, notes,
+      specs,
       // v6.0 新字段
       pole, grade, qualitySpecs, images,
       monthlyAvailable, delivery, purpose, sourceRegion,
       priceRangeMin, priceRangeMax,
     } = req.body;
 
+    // 使用 JWT 认证的 userId，不再信任 body 中的 userId
+    const userId = req.user.userId;
+
     // 必填
-    if (!userId || !type || !material) {
-      return res.status(400).json({ success: false, error: 'userId, type, material 为必填项' });
+    if (!type || !material) {
+      return res.status(400).json({ success: false, error: 'type, material 为必填项' });
     }
     if (!VALID_TYPES.includes(type)) {
       return res.status(400).json({ success: false, error: 'type 必须为 supply 或 demand' });
@@ -103,14 +107,14 @@ router.post('/', (req, res) => {
     const result = db.prepare(`
       INSERT INTO listings (
         user_id, type, waste_or_recycled, material, form, quantity, price, price_negotiable,
-        location, notes, pole, grade, quality_specs, images,
+        location, notes, specs, pole, grade, quality_specs, images,
         monthly_available, delivery, purpose, source_region,
         price_range_min, price_range_max, transaction_status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
     `).run(
       userId, type, wasteValue, material,
       form || '', quantity || 0, finalPrice, priceNegotiable,
-      location || '', notes || '',
+      location || '', notes || '', specs || '',
       pole || '', grade || '', specsJson, imagesJson,
       monthlyAvailable || 0, delivery || '', purpose || '', sourceRegion || '',
       priceRangeMin || 0, priceRangeMax || 0
@@ -169,13 +173,15 @@ router.get('/', (req, res) => {
     const limit = Math.max(1, Math.min(200, parseInt(req.query.limit, 10) || 50));
     const offset = (page - 1) * limit;
 
-    let where = 'WHERE 1=1';
+    // 默认只返回 active 状态的 listing，除非传了 status 参数
+    const hasStatusFilter = status !== undefined && status !== null && status !== '';
+    let where = hasStatusFilter ? 'WHERE 1=1' : "WHERE l.status = 'active'";
     const params = [];
 
     if (type)              { where += ' AND l.type = ?'; params.push(type); }
     if (material)          { where += ' AND l.material LIKE ?'; params.push('%'+material+'%'); }
     if (location)          { where += ' AND l.location LIKE ?'; params.push('%'+location+'%'); }
-    if (status)            { where += ' AND l.status = ?'; params.push(status); }
+    if (hasStatusFilter)   { where += ' AND l.status = ?'; params.push(status); }
     if (userId)            { where += ' AND l.user_id = ?'; params.push(Number(userId)); }
     if (pole)              { where += ' AND l.pole = ?'; params.push(pole); }
     if (grade)             { where += ' AND l.grade = ?'; params.push(grade); }

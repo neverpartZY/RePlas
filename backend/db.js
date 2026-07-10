@@ -492,4 +492,78 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_users_dual_roles ON users(dual_roles);
 `);
 
+// ======================== v7.0 安全认证增强 迁移 ========================
+
+// SMS 验证码表
+db.exec(`
+  CREATE TABLE IF NOT EXISTS sms_codes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    phone TEXT NOT NULL,
+    code TEXT NOT NULL,
+    purpose TEXT NOT NULL CHECK(purpose IN ('register', 'reset_password', 'login', 'bind_phone')),
+    used INTEGER DEFAULT 0,
+    expires_at TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_sms_phone ON sms_codes(phone, purpose, used);
+`);
+
+// Refresh Token 表（支持主动吊销）
+db.exec(`
+  CREATE TABLE IF NOT EXISTS refresh_tokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    token TEXT NOT NULL UNIQUE,
+    family TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    revoked INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_refresh_user ON refresh_tokens(user_id, revoked);
+  CREATE INDEX IF NOT EXISTS idx_refresh_token ON refresh_tokens(token);
+  CREATE INDEX IF NOT EXISTS idx_refresh_family ON refresh_tokens(family);
+`);
+
+// 登录尝试记录（频控用）
+db.exec(`
+  CREATE TABLE IF NOT EXISTS login_attempts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    identifier TEXT NOT NULL,
+    attempt_type TEXT NOT NULL DEFAULT 'user' CHECK(attempt_type IN ('user', 'ip')),
+    success INTEGER DEFAULT 0,
+    ip TEXT DEFAULT '',
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_attempts_id_type ON login_attempts(identifier, attempt_type, created_at);
+`);
+
+// users 表新增列：登录安全
+const securityUserCols = [
+  { name: 'failed_login_attempts', def: 'INTEGER DEFAULT 0' },
+  { name: 'locked_until',          def: 'TEXT' },
+  { name: 'last_login_at',         def: 'TEXT' },
+  { name: 'phone_verified',        def: 'INTEGER DEFAULT 0' },
+  { name: 'email_verified',        def: 'INTEGER DEFAULT 0' },
+];
+for (const col of securityUserCols) {
+  try {
+    db.exec(`ALTER TABLE users ADD COLUMN ${col.name} ${col.def}`);
+    console.log(`[DB] Added users.${col.name} column`);
+  } catch (e) { /* column already exists */ }
+}
+
+// 清理过期记录
+db.exec(`
+  CREATE INDEX IF NOT EXISTS idx_sms_expires ON sms_codes(expires_at);
+  CREATE INDEX IF NOT EXISTS idx_refresh_expires ON refresh_tokens(expires_at);
+`);
+// 定期清理：删除7天前的短信验证码、30天前的过期refresh token
+try {
+  db.prepare("DELETE FROM sms_codes WHERE expires_at < datetime('now', '-7 days')").run();
+  db.prepare("DELETE FROM refresh_tokens WHERE expires_at < datetime('now', '-30 days')").run();
+} catch (e) { /* cleanup skip */ }
+
+console.log('[DB] Auth security tables & columns migrated');
+
 module.exports = db;

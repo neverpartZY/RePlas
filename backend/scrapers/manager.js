@@ -225,7 +225,7 @@ function getExternalListings(filters = {}) {
   ).all(...params, limit, offset);
 
   return {
-    items: items.map(i => ({ ...i, extra: safeJSON(i.extra) })),
+    listings: items.map(i => ({ ...i, extra: safeJSON(i.extra) })),
     total: total.cnt,
     page, limit,
   };

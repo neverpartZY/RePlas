@@ -747,6 +747,7 @@ h1,h2,h3{font-weight:inherit}
 .ext-source-91{background:#e3f2fd;color:#0d47a1}
 .ext-source-bianbao{background:#fff3e0;color:#e65100}
 .ext-source-zaisubao{background:var(--primary-light);color:var(--primary-dark)}
+.ext-source-zz91{background:#e8f5e9;color:#1b5e20}
 .ext-listing-card{
   background:var(--card);border-radius:var(--radius);padding:12px 14px;
   margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.03);
@@ -889,10 +890,10 @@ AI 将自动识别品类、数量、价格、地点
     </div>
     <div class="listing-grid" id="homeListings"></div>
     <div class="empty-state" id="homeEmpty">
-      <div class="icon">💬</div>
-      <div class="title">还没有人发布过供求</div>
-      <div class="text">说句话成为第一个</div>
-      <div class="sub" onclick="document.getElementById('aiInput').focus()">✍️ 发布一条供求 →</div>
+      <div class="icon" id="homeEmptyIcon">💬</div>
+      <div class="title" id="homeEmptyTitle">还没有人发布过供求</div>
+      <div class="text" id="homeEmptyMsg">说句话成为第一个</div>
+      <div class="sub" id="homeEmptyAction" onclick="document.getElementById('aiInput').focus()">✍️ 发布一条供求 →</div>
     </div>
 
     <!-- Price Snapshot -->
@@ -994,12 +995,7 @@ AI 将自动识别品类、数量、价格、地点
     <div id="marketContent"></div>
 
     <div id="externalContent" style="display:none">
-      <div class="quick-filters" style="margin-bottom:10px">
-        <span class="quick-chip active" onclick="filterExternalSource('all',this)">全部来源</span>
-        <span class="quick-chip" onclick="filterExternalSource('91再生',this)">91再生</span>
-        <span class="quick-chip" onclick="filterExternalSource('变宝网',this)">变宝网</span>
-        <span class="quick-chip" onclick="filterExternalSource('再塑宝',this)">再塑宝</span>
-      </div>
+      <!-- 来源筛选已隐藏 -->
       <div style="font-size:12px;color:var(--text-hint);margin-bottom:8px" id="extStatus">加载中…</div>
       <div id="extListings"></div>
       <div class="empty-state" id="extEmpty" style="display:none">
@@ -1333,6 +1329,9 @@ AI 将自动识别品类、数量、价格、地点
       </div>
       <button class="btn-full" id="loginSubmitBtn" onclick="submitLogin()">登录</button>
       <div id="loginError" style="color:var(--danger);font-size:13px;margin-top:8px;display:none;text-align:center"></div>
+      <div style="text-align:center;margin-top:10px">
+        <a href="javascript:void(0)" onclick="showForgotPassword()" style="font-size:13px;color:var(--primary);text-decoration:none">忘记密码？</a>
+      </div>
     </div>
 
     <!-- Register form (hidden by default) -->
@@ -1347,7 +1346,9 @@ AI 将自动识别品类、数量、价格、地点
       </div>
       <div class="form-group">
         <label for="regPassword">设置密码 <span style="color:var(--danger)">*</span></label>
-        <input type="password" id="regPassword" placeholder="至少6位密码" maxlength="64">
+        <input type="password" id="regPassword" placeholder="至少8位，含数字和字母" maxlength="64" oninput="checkRegPasswordStrength()">
+        <div id="pwdStrength" style="height:4px;margin-top:6px;border-radius:2px;background:var(--border);transition:all .3s"><div id="pwdStrengthBar" style="height:100%;width:0;border-radius:2px;transition:all .3s"></div></div>
+        <div id="pwdStrengthText" style="font-size:11px;margin-top:2px;color:var(--text-hint);text-align:right"></div>
       </div>
       <div class="form-group">
         <label>选择身份 <span style="color:var(--danger)">*</span></label>
@@ -1375,6 +1376,53 @@ AI 将自动识别品类、数量、价格、地点
     </div>
     <div style="text-align:center;margin-top:12px;font-size:11px;color:var(--text-hint)">
       您的信息仅用于匹配撮合，数据安全加密
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     FORGOT PASSWORD MODAL
+     ================================================================ -->
+<div class="modal-overlay" id="forgotPwdModal">
+  <div class="modal-box">
+    <h3 style="margin:0 0 16px;text-align:center">重置密码</h3>
+
+    <!-- Step 1: Enter phone -->
+    <div id="forgotStep1">
+      <div class="form-group">
+        <label for="forgotPhone">请输入注册手机号</label>
+        <input type="tel" id="forgotPhone" placeholder="请输入11位手机号" maxlength="11" autocomplete="off">
+      </div>
+      <button class="btn-full" onclick="sendForgotSms()">获取验证码</button>
+      <div id="forgotStep1Error" style="color:var(--danger);font-size:13px;margin-top:8px;display:none;text-align:center"></div>
+    </div>
+
+    <!-- Step 2: Verify code -->
+    <div id="forgotStep2" style="display:none">
+      <div class="form-group">
+        <label for="forgotSmsCode">请输入邮箱验证码</label>
+        <input type="text" id="forgotSmsCode" placeholder="6位验证码" maxlength="6" autocomplete="off">
+      </div>
+      <button class="btn-full" onclick="verifyForgotSms()">验证</button>
+      <div id="forgotStep2Error" style="color:var(--danger);font-size:13px;margin-top:8px;display:none;text-align:center"></div>
+    </div>
+
+    <!-- Step 3: Set new password -->
+    <div id="forgotStep3" style="display:none">
+      <div class="form-group">
+        <label for="newPwd">新密码</label>
+        <input type="password" id="newPwd" placeholder="至少6位" maxlength="64" oninput="checkNewPwdStrength()">
+      </div>
+      <div class="form-group">
+        <label for="newPwdConfirm">确认新密码</label>
+        <input type="password" id="newPwdConfirm" placeholder="再次输入新密码" maxlength="64">
+      </div>
+      <button class="btn-full" onclick="resetPasswordSubmit()">重置密码</button>
+      <div id="forgotStep3Error" style="color:var(--danger);font-size:13px;margin-top:8px;display:none;text-align:center"></div>
+    </div>
+
+    <div style="text-align:center;margin-top:12px">
+      <a href="javascript:void(0)" onclick="closeForgotPassword()" style="font-size:13px;color:var(--text-hint);text-decoration:none">返回登录</a>
     </div>
   </div>
 </div>
@@ -1417,7 +1465,7 @@ function escapeHtml(str) {
 /* ===================================================================
    CONFIGURATION
    =================================================================== */
-const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:3456' : '/api';
+const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:3456' : '';
 let lastFailedRequest = null;
 
 /* ===================================================================
@@ -1426,6 +1474,16 @@ let lastFailedRequest = null;
 async function api(path, options = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
+
+  // 自动刷新即将过期的 token（提前2分钟刷新）
+  if (state.refreshToken && state.tokenExpiry && Date.now() > state.tokenExpiry - 120000) {
+    try {
+      await refreshAccessToken();
+    } catch (e) {
+      // 刷新失败，继续用旧 token 尝试
+    }
+  }
+
   try {
     const { headers: optsHeaders, ...restOpts } = options;
     const reqHeaders = { 'Content-Type': 'application/json', ...optsHeaders };
@@ -1441,10 +1499,29 @@ async function api(path, options = {}) {
     clearTimeout(timeout);
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
-      // 401 → 自动弹出登录框
+      // 401 → 尝试刷新 token，如果刷新失败再弹登录框
       if (res.status === 401 && !path.includes('/auth/')) {
+        if (state.refreshToken) {
+          try {
+            const refreshed = await refreshAccessToken();
+            if (refreshed) {
+              // 重试原请求
+              reqHeaders['Authorization'] = 'Bearer ' + state.token;
+              const retryRes = await fetch(API_BASE + path, {
+                headers: reqHeaders,
+                signal: controller.signal,
+                ...restOpts
+              });
+              if (retryRes.ok) return await retryRes.json();
+            }
+          } catch (e) { /* refresh failed, fall through */ }
+        }
         showRegistration();
         throw new Error('请先登录');
+      }
+      // 429 频控
+      if (res.status === 429) {
+        showToast(errData.error || '请求过于频繁，请稍后再试', 'error');
       }
       throw new Error(errData.error || `HTTP ${res.status}`);
     }
@@ -1456,6 +1533,37 @@ async function api(path, options = {}) {
       showToast('请求超时，请检查网络后重试', 'error');
     }
     throw e;
+  }
+}
+
+async function refreshAccessToken() {
+  if (!state.refreshToken) return false;
+  try {
+    const res = await fetch(API_BASE + '/api/auth/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: state.refreshToken }),
+    });
+    if (!res.ok) {
+      // 刷新失败，清除登录状态
+      state.token = null;
+      state.refreshToken = null;
+      state.tokenExpiry = 0;
+      saveSession();
+      return false;
+    }
+    const data = await res.json();
+    if (data.success && data.token) {
+      state.token = data.token;
+      state.refreshToken = data.refreshToken;
+      state.tokenExpiry = Date.now() + data.expiresIn * 1000;
+      saveSession();
+      return true;
+    }
+    return false;
+  } catch (e) {
+    console.warn('[auth] Token refresh failed:', e.message);
+    return false;
   }
 }
 
@@ -1828,6 +1936,8 @@ let state = {
   userEmail: '',
   userCompany: '',
   token: null,
+  refreshToken: null,
+  tokenExpiry: 0,
   activeTab: 'home',
   matchFilter: 'all',
   marketTab: 'waste',
@@ -1850,9 +1960,13 @@ function saveSession() {
       userEmail: state.userEmail,
       userCompany: state.userCompany,
       token: state.token,
+      refreshToken: state.refreshToken,
+      tokenExpiry: state.tokenExpiry,
     }));
   } catch(e) { /* localStorage may be unavailable in private mode */ }
+}
 
+function loadSession() {
   try {
     const d = JSON.parse(localStorage.getItem('zs5_session'));
     if (d && typeof d === 'object') {
@@ -1864,8 +1978,13 @@ function saveSession() {
       state.userEmail = d.userEmail || '';
       state.userCompany = d.userCompany || '';
       state.token = d.token || null;
+      state.refreshToken = d.refreshToken || null;
+      state.tokenExpiry = d.tokenExpiry || 0;
     }
   } catch(e) { /* localStorage parse error — session reset */ }
+}
+
+function isLoggedIn() {
   return !!(state.token && state.userId && state.userName && state.userRole);
 }
 
@@ -2035,11 +2154,32 @@ async function submitLogin() {
       btn.textContent = '登录';
     }
   } catch (e) {
-    errEl.textContent = e.message || '登录失败';
+    const msg = e.message || '登录失败';
+    errEl.textContent = msg;
     errEl.style.display = '';
     btn.disabled = false;
     btn.textContent = '登录';
+    // 登录被锁定 — 启动倒计时
+    if (msg.includes('分钟') && msg.includes('重试')) {
+      startLoginCountdown(btn, 60);
+    }
   }
+}
+
+function startLoginCountdown(btn, seconds) {
+  btn.disabled = true;
+  let remaining = seconds;
+  const tick = () => {
+    btn.textContent = remaining + '秒后可重试';
+    remaining--;
+    if (remaining <= 0) {
+      btn.textContent = '登录';
+      btn.disabled = false;
+    } else {
+      setTimeout(tick, 1000);
+    }
+  };
+  setTimeout(tick, 1000);
 }
 
 // ---- Register ----
@@ -2058,6 +2198,7 @@ async function submitRegistration() {
   if (!phone) { errEl.textContent = '请输入手机号'; errEl.style.display = ''; return; }
   if (!/^1[3-9]\d{9}$/.test(phone)) { errEl.textContent = '手机号格式不正确，请输入11位手机号'; errEl.style.display = ''; return; }
   if (!password || password.length < 6) { errEl.textContent = '密码长度不能少于6位'; errEl.style.display = ''; return; }
+  if (password.length < 8) { errEl.textContent = '建议使用8位以上包含数字和字母的密码'; errEl.style.display = ''; /* 建议但不阻断 */ }
   if (!role) { errEl.textContent = '请选择身份'; errEl.style.display = ''; return; }
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errEl.textContent = '邮箱格式不正确'; errEl.style.display = ''; return; }
   errEl.style.display = 'none';
@@ -2087,6 +2228,8 @@ async function submitRegistration() {
 
 function applyAuthData(data) {
   state.token = data.token;
+  state.refreshToken = data.refreshToken || null;
+  state.tokenExpiry = Date.now() + (data.expiresIn || 900) * 1000;
   state.userId = data.user.id;
   state.userName = data.user.name;
   state.userRole = data.user.role;
@@ -2099,7 +2242,17 @@ function applyAuthData(data) {
 }
 
 function logout() {
+  // 主动吊销 refresh token
+  if (state.refreshToken) {
+    fetch(API_BASE + '/api/auth/logout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: state.refreshToken }),
+    }).catch(() => {});
+  }
   state.token = null;
+  state.refreshToken = null;
+  state.tokenExpiry = 0;
   state.userId = null;
   state.userName = '';
   state.userRole = '';
@@ -2125,6 +2278,189 @@ function updateUserUI() {
   const logoutBtn = document.getElementById('profileLogout');
   if (logoutBtn) {
     logoutBtn.style.display = isLoggedIn() ? '' : 'none';
+  }
+}
+
+// ---- Password Strength ----
+function checkRegPasswordStrength() {
+  const pwd = document.getElementById('regPassword').value;
+  let score = 0;
+  if (pwd.length >= 6) score++;
+  if (pwd.length >= 8) score++;
+  if (/[a-zA-Z]/.test(pwd) && /\d/.test(pwd)) score++;
+  if (/[^a-zA-Z0-9]/.test(pwd)) score++;
+
+  const colors = ['#e74c3c', '#f39c12', '#2ecc71', '#27ae60'];
+  const labels = ['弱', '一般', '强', '很强'];
+  const idx = Math.min(score, 3);
+
+  const bar = document.getElementById('pwdStrengthBar');
+  const text = document.getElementById('pwdStrengthText');
+  bar.style.width = ((idx + 1) * 25) + '%';
+  bar.style.background = colors[idx];
+  text.textContent = score > 0 ? labels[idx] : '';
+  text.style.color = colors[idx];
+}
+
+function checkNewPwdStrength() {
+  const pwd = document.getElementById('newPwd').value;
+  let score = 0;
+  if (pwd.length >= 6) score++;
+  if (pwd.length >= 8) score++;
+  if (/[a-zA-Z]/.test(pwd) && /\d/.test(pwd)) score++;
+  if (/[^a-zA-Z0-9]/.test(pwd)) score++;
+  // Simple visual feedback on border
+  const el = document.getElementById('newPwd');
+  if (score <= 1) el.style.borderColor = '#e74c3c';
+  else if (score === 2) el.style.borderColor = '#f39c12';
+  else el.style.borderColor = '#2ecc71';
+}
+
+// ---- Forgot Password Flow ----
+let forgotPhone = '';
+let forgotResetToken = '';
+let forgotSmsCountdown = 0;
+
+function showForgotPassword() {
+  document.getElementById('regModal').classList.remove('show');
+  document.getElementById('forgotPwdModal').classList.add('show');
+  resetForgotSteps();
+}
+
+function closeForgotPassword() {
+  document.getElementById('forgotPwdModal').classList.remove('show');
+  document.getElementById('regModal').classList.add('show');
+  resetForgotSteps();
+}
+
+function resetForgotSteps() {
+  document.getElementById('forgotStep1').style.display = '';
+  document.getElementById('forgotStep2').style.display = 'none';
+  document.getElementById('forgotStep3').style.display = 'none';
+  document.getElementById('forgotStep1Error').style.display = 'none';
+  document.getElementById('forgotStep2Error').style.display = 'none';
+  document.getElementById('forgotStep3Error').style.display = 'none';
+  forgotPhone = '';
+  forgotResetToken = '';
+  forgotSmsCountdown = 0;
+}
+
+async function sendForgotSms() {
+  const phone = document.getElementById('forgotPhone').value.trim();
+  const errEl = document.getElementById('forgotStep1Error');
+
+  if (!/^1[3-9]\d{9}$/.test(phone)) {
+    errEl.textContent = '请输入正确的手机号'; errEl.style.display = ''; return;
+  }
+  errEl.style.display = 'none';
+
+  if (forgotSmsCountdown > 0) return;
+
+  const btn = document.querySelector('#forgotStep1 .btn-full');
+  btn.disabled = true;
+  btn.textContent = '发送中…';
+
+  try {
+    const data = await api('/api/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ phone }),
+    });
+    if (data.success) {
+      forgotPhone = phone;
+      showToast('验证码已发送到注册邮箱' + (data.devCode ? '（开发模式：' + data.devCode + '）' : ''), 'success');
+      forgotSmsCountdown = data.retryAfter || 60;
+      // Inline countdown
+      (function tick() {
+        forgotSmsCountdown--;
+        if (forgotSmsCountdown <= 0) { btn.textContent = '获取验证码'; btn.disabled = false; return; }
+        btn.textContent = forgotSmsCountdown + 's后重发';
+        btn.disabled = true;
+        setTimeout(tick, 1000);
+      })();
+      // Show step 2
+      document.getElementById('forgotStep1').style.display = 'none';
+      document.getElementById('forgotStep2').style.display = '';
+    } else {
+      errEl.textContent = data.error || '发送失败'; errEl.style.display = '';
+      btn.disabled = false;
+      btn.textContent = '获取验证码';
+    }
+  } catch (e) {
+    errEl.textContent = e.message || '发送失败，请重试'; errEl.style.display = '';
+    btn.disabled = false;
+    btn.textContent = '获取验证码';
+  }
+}
+
+async function verifyForgotSms() {
+  const code = document.getElementById('forgotSmsCode').value.trim();
+  const errEl = document.getElementById('forgotStep2Error');
+
+  if (!code || code.length !== 6) {
+    errEl.textContent = '请输入6位验证码'; errEl.style.display = ''; return;
+  }
+  errEl.style.display = 'none';
+
+  const btn = document.querySelector('#forgotStep2 .btn-full');
+  btn.disabled = true;
+  btn.textContent = '验证中…';
+
+  try {
+    const data = await api('/api/auth/verify-reset-code', {
+      method: 'POST',
+      body: JSON.stringify({ phone: forgotPhone, code }),
+    });
+    if (data.success) {
+      forgotResetToken = data.resetToken;
+      document.getElementById('forgotStep2').style.display = 'none';
+      document.getElementById('forgotStep3').style.display = '';
+    } else {
+      errEl.textContent = data.error || '验证失败'; errEl.style.display = '';
+      btn.disabled = false;
+      btn.textContent = '验证';
+    }
+  } catch (e) {
+    errEl.textContent = e.message || '验证失败，请重试'; errEl.style.display = '';
+    btn.disabled = false;
+    btn.textContent = '验证';
+  }
+}
+
+async function resetPasswordSubmit() {
+  const newPwd = document.getElementById('newPwd').value;
+  const confirm = document.getElementById('newPwdConfirm').value;
+  const errEl = document.getElementById('forgotStep3Error');
+
+  if (!newPwd || newPwd.length < 6) {
+    errEl.textContent = '新密码至少6位'; errEl.style.display = ''; return;
+  }
+  if (newPwd !== confirm) {
+    errEl.textContent = '两次输入的密码不一致'; errEl.style.display = ''; return;
+  }
+  errEl.style.display = 'none';
+
+  const btn = document.querySelector('#forgotStep3 .btn-full');
+  btn.disabled = true;
+  btn.textContent = '重置中…';
+
+  try {
+    const data = await api('/api/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ phone: forgotPhone, resetToken: forgotResetToken, newPassword: newPwd }),
+    });
+    if (data.success) {
+      showToast('密码重置成功，请使用新密码登录', 'success');
+      closeForgotPassword();
+      switchAuthTab('login');
+    } else {
+      errEl.textContent = data.error || '重置失败'; errEl.style.display = '';
+      btn.disabled = false;
+      btn.textContent = '重置密码';
+    }
+  } catch (e) {
+    errEl.textContent = e.message || '重置失败，请重试'; errEl.style.display = '';
+    btn.disabled = false;
+    btn.textContent = '重置密码';
   }
 }
 
@@ -2417,17 +2753,23 @@ async function confirmParsedListing() {
    SECTION 9: PAGE LOADERS
    =================================================================== */
 async function loadHomePage() {
-  if (!isLoggedIn()) { showRegistration(); return; }
-
   const el = document.getElementById('homeEmpty');
   const container = document.getElementById('homeListings');
 
-  // Load stats and recent listings in parallel
+  // Load stats, internal listings, AND external listings in parallel
   toggleLoading('homeLoading', true);
-  const [statsRes, listingsRes] = await Promise.all([
-    api('/api/stats').catch(() => null),
-    api('/api/listings').catch(() => null)
+
+  let fetchError = null;
+  const [statsRes, listingsRes, extRes] = await Promise.all([
+    api('/api/stats').catch(e => { console.error('[Home] stats API error:', e.message); return null; }),
+    api('/api/listings').catch(e => { fetchError = '网络异常: ' + e.message; console.error('[Home] listings API error:', e.message); return null; }),
+    api('/api/external/listings?limit=200').catch(e => { console.error('[Home] external API error:', e.message); return null; })
   ]);
+
+  if (listingsRes && !listingsRes.success) {
+    fetchError = listingsRes.error || '服务器返回异常';
+    console.error('[Home] listings API failed:', listingsRes.error);
+  }
 
   if (statsRes && statsRes.success && statsRes.stats) {
     state.stats = statsRes.stats;
@@ -2442,19 +2784,48 @@ async function loadHomePage() {
   }
 
   try {
-    if (listingsRes && listingsRes.success && listingsRes.listings) {
-      state.listings = listingsRes.listings;
-      const sorted = [...listingsRes.listings].sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
-      document.getElementById('homeListingsCount').textContent = sorted.length + '条';
-      if (sorted.length === 0) {
-        container.innerHTML = '';
-        el.style.display = 'flex';
-      } else {
-        el.style.display = 'none';
-        container.innerHTML = sorted.slice(0, 6).map(l => renderListingCard(l, false)).join('');
+    // Merge internal + external listings
+    const internal = (listingsRes && listingsRes.success && listingsRes.listings) ? listingsRes.listings : [];
+    const external = (extRes && extRes.success && extRes.listings) ? extRes.listings : [];
+
+    const mappedExternal = external.map(l => ({
+      ...l,
+      id: 'ext_' + l.id,
+      waste_or_recycled: '废塑料',
+      user_name: '全网货源',
+      user_id: null,
+      created_at: (l.published_at && !isNaN(new Date(l.published_at).getTime())) ? l.published_at : (l.first_seen || ''),
+      _external: true,
+    }));
+
+    const all = [...internal, ...mappedExternal];
+    all.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+    state.listings = all;
+
+    document.getElementById('homeListingsCount').textContent = all.length + '条';
+    if (all.length === 0) {
+      container.innerHTML = '';
+      el.style.display = 'flex';
+      // 如果是因为错误导致空列表，显示错误提示
+      if (fetchError) {
+        document.getElementById('homeEmptyIcon').textContent = '⚠️';
+        document.getElementById('homeEmptyTitle').textContent = '加载失败';
+        document.getElementById('homeEmptyMsg').textContent = fetchError;
+        document.getElementById('homeEmptyAction').textContent = '点击重试';
+        document.getElementById('homeEmptyAction').onclick = () => loadHomePage();
+      } else if (isLoggedIn()) {
+        document.getElementById('homeEmptyIcon').textContent = '💬';
+        document.getElementById('homeEmptyTitle').textContent = '还没有人发布过供求';
+        document.getElementById('homeEmptyMsg').textContent = '说句话成为第一个';
+        document.getElementById('homeEmptyAction').textContent = '✍️ 发布一条供求 →';
+        document.getElementById('homeEmptyAction').onclick = () => document.getElementById('aiInput').focus();
       }
+    } else {
+      el.style.display = 'none';
+      container.innerHTML = all.map(l => renderListingCard(l, false)).join('');
     }
   } catch (e) {
+    console.error('[Home] render error:', e.message);
     container.innerHTML = '';
     el.style.display = 'flex';
   }
@@ -3168,7 +3539,6 @@ function renderListingCard(l, showScore) {
   const wasteBadge = l.waste_or_recycled === '废塑料'
     ? '<span class="badge" style="background:#fce4ec;color:#880e4f">废塑料</span>'
     : (l.waste_or_recycled === '再生料' ? '<span class="badge" style="background:#e8f5e9;color:#1b5e20">再生料</span>' : '');
-
   const qtyStr = l.quantity ? `<strong>${escapeHtml(l.quantity)}吨</strong>` : '';
   const priceStr = l.price ? `<strong>${escapeHtml(l.price)}元/吨</strong>` : '<span style="color:var(--text-hint)">价格面议</span>';
   const locStr = l.location ? `<span class="location-tag">📍 ${escapeHtml(l.location)}</span>` : '';
@@ -3188,9 +3558,9 @@ function renderListingCard(l, showScore) {
       <div class="card-info">${qtyStr} ${priceStr}</div>
       <div class="card-meta">${locStr}</div>
       <div class="card-footer">
-        <span>${timeAgo(l.created_at)}${l.user_name ? ` · <span style="color:var(--primary);cursor:pointer" onclick="event.stopPropagation();showEnterprise(${l.user_id})">${escapeHtml(l.user_name)}</span>` : ''}</span>
+        <span>${timeAgo(l.created_at)}${l.user_name && !l._external ? ` · <span style="color:var(--primary);cursor:pointer" onclick="event.stopPropagation();showEnterprise(${l.user_id})">${escapeHtml(l.user_name)}</span>` : ''}</span>
         <span style="display:flex;align-items:center;gap:8px">
-          ${l.user_id !== state.userId ? `<button class="sheet-btn primary" style="font-size:11px;padding:3px 10px;margin:0" onclick="event.stopPropagation();openChatFromListing(${l.id})">💬 联系</button>` : ''}
+          ${l._external && l.contact_info ? `<a href="tel:${escapeHtml(String(l.contact_info))}" class="sheet-btn primary" style="font-size:11px;padding:3px 10px;margin:0;background:var(--success);text-decoration:none" onclick="event.stopPropagation()">📞 ${escapeHtml(String(l.contact_info))}</a>` : (!l._external && l.user_id && l.user_id !== state.userId ? `<button class="sheet-btn primary" style="font-size:11px;padding:3px 10px;margin:0" onclick="event.stopPropagation();openChatFromListing(${l.id})">💬 联系</button>` : '')}
           ${scoreHTML}
         </span>
       </div>
@@ -3200,6 +3570,8 @@ function renderListingCard(l, showScore) {
 function viewListingDetail(id) {
   const l = state.listings.find(x => x.id === id);
   if (!l) return;
+
+  const isExternal = !!l._external;
 
   const html = `
     <h3 class="sheet-title">${escapeHtml(l.material || '未知材料')}</h3>
@@ -3214,9 +3586,12 @@ function viewListingDetail(id) {
       <div class="info-item"><div class="info-label">发布时间</div><div class="info-value">${timeAgo(l.created_at)}</div></div>
     </div>
     ${l.notes?`<div style="margin-top:12px;padding:10px;background:var(--bg);border-radius:var(--radius-sm);font-size:12px;color:var(--text-secondary)">📝 ${escapeHtml(l.notes)}</div>`:''}
+    ${isExternal && l.contact_info ? `<div style="margin-top:12px;padding:12px;background:#e8f5e9;border-radius:var(--radius-sm);text-align:center"><span style="font-size:12px;color:#2e7d32">📞 联系方式</span><br><a href="tel:${escapeHtml(String(l.contact_info))}" style="font-size:18px;font-weight:700;color:var(--success);text-decoration:none">${escapeHtml(String(l.contact_info))}</a></div>` : ''}
+    <!-- 查看原文已隐藏 -->
     <div class="sheet-actions">
-      ${l.user_id !== state.userId ? `<button class="sheet-btn primary" onclick="openChatFromListing(${l.id});closeSheet()">💬 联系${l.type==='supply'?'卖家':'买家'}：${escapeHtml(l.user_name||'')}</button>
+      ${!isExternal && l.user_id !== state.userId ? `<button class="sheet-btn primary" onclick="openChatFromListing(${l.id});closeSheet()">💬 联系${l.type==='supply'?'卖家':'买家'}：${escapeHtml(l.user_name||'')}</button>
       <button class="sheet-btn outline" onclick="showEnterprise(${l.user_id});closeSheet()">🏢 企业名片</button>` : ''}
+      ${isExternal && l.contact_info ? `<a href="tel:${escapeHtml(String(l.contact_info))}" class="sheet-btn primary" style="background:var(--success);text-decoration:none">📞 拨打电话：${escapeHtml(String(l.contact_info))}</a>` : ''}
       <button class="sheet-btn outline" onclick="closeSheet()">关闭</button>
     </div>`;
 openSheet(html);
@@ -3468,7 +3843,7 @@ async function loadExternalListings() {
     const data = await api('/api/external/listings?limit=50');
     if (data.success && data.listings) {
       _externalListings = data.listings;
-      status.textContent = '共' + _externalListings.length + '条全网货源 · 来自91再生/变宝网/再塑宝';
+      status.textContent = '共' + _externalListings.length + '条全网货源';
       applyExternalFilter();
     } else {
       status.textContent = '暂无全网货源数据';
@@ -3507,11 +3882,9 @@ function applyExternalFilter() {
   empty.style.display = 'none';
 
   container.innerHTML = filtered.map(l => {
-    const sourceCls = l.source === '91再生' ? 'ext-source-91' : l.source === '变宝网' ? 'ext-source-bianbao' : 'ext-source-zaisubao';
     return `<div class="ext-listing-card">
       <div class="ext-header">
         <span class="ext-material">${escapeHtml(l.material || '未知')}</span>
-        <span class="external-source-badge ${sourceCls}">${escapeHtml(l.source || '')}</span>
       </div>
       <div class="ext-info">
         <strong>${escapeHtml(l.form || '')}</strong> ·
@@ -3521,7 +3894,7 @@ function applyExternalFilter() {
       </div>
       <div class="ext-footer">
         <span>📍 ${escapeHtml(l.location || '未知')}</span>
-        <span>${l.crawl_time ? timeAgo(l.crawl_time) : ''}</span>
+        <span>${l.published_at ? timeAgo(l.published_at) : (l.first_seen ? timeAgo(l.first_seen) : '')}</span>
       </div>
     </div>`;
   }).join('');
@@ -3812,12 +4185,10 @@ function init() {
 
   if (isLoggedIn()) {
     updateUserUI();
-    loadHomePage();
     loadDealBadge();
-  } else {
-    // Show registration after short delay
-    setTimeout(showRegistration, 400);
   }
+  // Always load homepage data — visitors can browse without login
+  loadHomePage();
 
   // Keyboard: Enter to submit
   document.getElementById('aiInput').addEventListener('keydown', function(e) {

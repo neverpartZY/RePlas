@@ -2788,18 +2788,34 @@ async function loadHomePage() {
     const internal = (listingsRes && listingsRes.success && listingsRes.listings) ? listingsRes.listings : [];
     const external = (extRes && extRes.success && extRes.listings) ? extRes.listings : [];
 
-    const mappedExternal = external.map(l => ({
-      ...l,
-      id: 'ext_' + l.id,
-      waste_or_recycled: '废塑料',
-      user_name: '全网货源',
-      user_id: null,
-      created_at: (l.published_at && !isNaN(new Date(l.published_at).getTime())) ? l.published_at : (l.first_seen || ''),
-      _external: true,
-    }));
+    const mappedExternal = external.map(l => {
+      // Normalize external dates to ISO format (e.g. "2026-7-8" → "2026-07-08")
+      let extDate = '';
+      const rawDate = l.published_at || l.first_seen || '';
+      const d = new Date(rawDate);
+      if (!isNaN(d.getTime())) {
+        extDate = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      } else {
+        extDate = l.first_seen || '';
+      }
+      return {
+        ...l,
+        id: 'ext_' + l.id,
+        waste_or_recycled: '废塑料',
+        user_name: '全网货源',
+        user_id: null,
+        created_at: extDate,
+        _external: true,
+      };
+    });
 
     const all = [...internal, ...mappedExternal];
-    all.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+    // Use numeric date comparison for correct sorting (not string compare)
+    all.sort((a, b) => {
+      const da = new Date(a.created_at);
+      const db = new Date(b.created_at);
+      return (db.getTime() || 0) - (da.getTime() || 0);
+    });
     state.listings = all;
 
     document.getElementById('homeListingsCount').textContent = all.length + '条';
@@ -3560,7 +3576,9 @@ function renderListingCard(l, showScore) {
       <div class="card-footer">
         <span>${timeAgo(l.created_at)}${l.user_name && !l._external ? ` · <span style="color:var(--primary);cursor:pointer" onclick="event.stopPropagation();showEnterprise(${l.user_id})">${escapeHtml(l.user_name)}</span>` : ''}</span>
         <span style="display:flex;align-items:center;gap:8px">
-          ${l._external && l.contact_info ? `<a href="tel:${escapeHtml(String(l.contact_info))}" class="sheet-btn primary" style="font-size:11px;padding:3px 10px;margin:0;background:var(--success);text-decoration:none" onclick="event.stopPropagation()">📞 ${escapeHtml(String(l.contact_info))}</a>` : (!l._external && l.user_id && l.user_id !== state.userId ? `<button class="sheet-btn primary" style="font-size:11px;padding:3px 10px;margin:0" onclick="event.stopPropagation();openChatFromListing(${l.id})">💬 联系</button>` : '')}
+          ${l._external && l.contact_info ? `<a href="tel:${escapeHtml(String(l.contact_info))}" class="sheet-btn primary" style="font-size:11px;padding:3px 10px;margin:0;background:var(--success);text-decoration:none" onclick="event.stopPropagation()">📞 ${escapeHtml(String(l.contact_info))}</a>` : ''}
+          ${!l._external && l.user_id && l.user_id !== state.userId && l.phone ? `<a href="tel:${escapeHtml(l.phone)}" class="sheet-btn primary" style="font-size:11px;padding:3px 10px;margin:0;background:var(--success);text-decoration:none" onclick="event.stopPropagation()">📞 ${escapeHtml(l.phone)}</a>` : ''}
+          ${!l._external && l.user_id && l.user_id !== state.userId ? `<button class="sheet-btn primary" style="font-size:11px;padding:3px 10px;margin:0" onclick="event.stopPropagation();openChatFromListing(${l.id})">💬 联系</button>` : ''}
           ${scoreHTML}
         </span>
       </div>
@@ -3587,11 +3605,13 @@ function viewListingDetail(id) {
     </div>
     ${l.notes?`<div style="margin-top:12px;padding:10px;background:var(--bg);border-radius:var(--radius-sm);font-size:12px;color:var(--text-secondary)">📝 ${escapeHtml(l.notes)}</div>`:''}
     ${isExternal && l.contact_info ? `<div style="margin-top:12px;padding:12px;background:#e8f5e9;border-radius:var(--radius-sm);text-align:center"><span style="font-size:12px;color:#2e7d32">📞 联系方式</span><br><a href="tel:${escapeHtml(String(l.contact_info))}" style="font-size:18px;font-weight:700;color:var(--success);text-decoration:none">${escapeHtml(String(l.contact_info))}</a></div>` : ''}
+    ${!isExternal && l.phone ? `<div style="margin-top:12px;padding:12px;background:#e8f5e9;border-radius:var(--radius-sm);text-align:center"><span style="font-size:12px;color:#2e7d32">📞 联系方式</span><br><a href="tel:${escapeHtml(l.phone)}" style="font-size:18px;font-weight:700;color:var(--success);text-decoration:none">${escapeHtml(l.phone)}</a></div>` : ''}
     <!-- 查看原文已隐藏 -->
     <div class="sheet-actions">
       ${!isExternal && l.user_id !== state.userId ? `<button class="sheet-btn primary" onclick="openChatFromListing(${l.id});closeSheet()">💬 联系${l.type==='supply'?'卖家':'买家'}：${escapeHtml(l.user_name||'')}</button>
       <button class="sheet-btn outline" onclick="showEnterprise(${l.user_id});closeSheet()">🏢 企业名片</button>` : ''}
       ${isExternal && l.contact_info ? `<a href="tel:${escapeHtml(String(l.contact_info))}" class="sheet-btn primary" style="background:var(--success);text-decoration:none">📞 拨打电话：${escapeHtml(String(l.contact_info))}</a>` : ''}
+      ${!isExternal && l.phone && l.user_id !== state.userId ? `<a href="tel:${escapeHtml(l.phone)}" class="sheet-btn primary" style="background:var(--success);text-decoration:none">📞 拨打电话：${escapeHtml(l.phone)}</a>` : ''}
       <button class="sheet-btn outline" onclick="closeSheet()">关闭</button>
     </div>`;
 openSheet(html);

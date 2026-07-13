@@ -37,11 +37,16 @@ RUN addgroup -g 1001 -S nodejs && \
     chown -R nodejs:nodejs /app
 USER nodejs
 
+# 环境变量默认值（云托管可能不注入 container.config.json 的 envParams）
+# 8080: 非 root 用户可绑定，避免 EACCES
+ENV NODE_ENV=production
+ENV PORT=8080
+
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:'+(process.env.PORT||3456)+'/api/health', r => {process.exit(r.statusCode===200?0:1)})"
+    CMD node -e "require('http').get('http://localhost:8080/api/health', r => {process.exit(r.statusCode===200?0:1)})"
 
-EXPOSE 80
+EXPOSE 8080
 
 # tini 作为 init 进程
 ENTRYPOINT ["/sbin/tini", "--"]

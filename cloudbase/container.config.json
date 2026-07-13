@@ -1,12 +1,12 @@
 {
   "name": "zaisutong",
   "description": "再塑通 RePlasMatch — 塑料循环经济撮合平台",
-  "containerPort": 80,
+  "containerPort": 8080,
   "envParams": {
     "NODE_ENV": "production",
     "DB_TYPE": "sqlite",
     "STORAGE_TYPE": "local",
-    "PORT": "80",
+    "PORT": "8080",
     "JWT_SECRET": "zaisutong_cloud_jwt_2026_prod",
     "REFRESH_SECRET": "zaisutong_cloud_refresh_2026_prod",
     "JWT_EXPIRES_IN": "7d",

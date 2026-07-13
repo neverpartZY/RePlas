@@ -41,7 +41,7 @@ USER nodejs
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD node -e "require('http').get('http://localhost:'+(process.env.PORT||3456)+'/api/health', r => {process.exit(r.statusCode===200?0:1)})"
 
-EXPOSE 3456
+EXPOSE 80
 
 # tini 作为 init 进程
 ENTRYPOINT ["/sbin/tini", "--"]

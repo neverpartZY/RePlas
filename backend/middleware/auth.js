@@ -6,19 +6,22 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
-const JWT_SECRET = process.env.JWT_SECRET;
+// 密钥管理：优先使用环境变量，云托管环境自动生成（容器重启后所有 token 失效）
+let JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
-const REFRESH_SECRET = process.env.REFRESH_SECRET || (JWT_SECRET ? JWT_SECRET + '_refresh' : undefined);
+let REFRESH_SECRET = process.env.REFRESH_SECRET;
 const REFRESH_EXPIRES_IN = '30d';
 
-// 生产环境强制检查 JWT_SECRET 已设置
 if (!JWT_SECRET) {
-  console.error('');
-  console.error('❌ FATAL: JWT_SECRET 环境变量未设置！');
-  console.error('   export JWT_SECRET=$(openssl rand -base64 48)');
-  console.error('   或: set JWT_SECRET=your-secret-key');
-  console.error('');
-  process.exit(1);
+  JWT_SECRET = crypto.randomBytes(64).toString('hex');
+  console.warn('');
+  console.warn('⚠️  JWT_SECRET 未设置，已自动生成临时密钥（容器重启后所有 token 将失效）');
+  console.warn('   请在云托管控制台设置 JWT_SECRET 环境变量以持久化密钥');
+  console.warn('');
+}
+if (!REFRESH_SECRET) {
+  REFRESH_SECRET = crypto.randomBytes(64).toString('hex');
+  console.warn('⚠️  REFRESH_SECRET 未设置，已自动生成临时密钥');
 }
 
 // ---- Access Token ----

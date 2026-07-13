@@ -16,7 +16,13 @@ const rateLimit = require('express-rate-limit');
 const { verifyToken } = require('./middleware/auth');
 const { requireAuth } = require('./middleware/auth');
 const { optionalAuth } = require('./middleware/auth');
-const db = require('./db');
+
+// 数据库 — 根据 DB_TYPE 自动选择 SQLite 或 MySQL
+const db = require('./db/index');
+const DB_TYPE = db.DB_TYPE;
+
+// 存储 — 根据 STORAGE_TYPE 自动选择本地或 COS
+const storage = require('./storage/index');
 
 // ---- Routes ----------------------------------------------------------------
 const authRouter        = require('./routes/auth');
@@ -99,8 +105,10 @@ app.use((req, res, next) => {
 
 app.use(express.json({ limit: '1mb' }));
 
-// Static file serving for uploaded images
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Static file serving for uploaded images（本地模式；云托管模式走 COS URL）
+if (storage.STORAGE_TYPE !== 'cos') {
+  app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+}
 
 // Request logging
 app.use((req, res, next) => {
@@ -128,7 +136,15 @@ app.use('/api/prices',    optionalAuth, pricesRouter);
 app.use('/api/stats',     optionalAuth, statsRouter);
 app.use('/api/ai',        optionalAuth, aiRouter);
 app.use('/api/enterprise', optionalAuth, enterpriseRouter);
-app.use('/api/health',    (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
+app.use('/api/health',    (req, res) => {
+  const health = {
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    db: DB_TYPE,
+    storage: storage.STORAGE_TYPE,
+  };
+  res.json(health);
+});
 
 // P0 新路由 — 图片上传需支持 multipart，单独放开 Content-Type 限制
 app.use('/api/vision', (req, res, next) => {
@@ -239,10 +255,10 @@ app.set('wsClients', wsClients);
 // ---- Start -----------------------------------------------------------------
 server.listen(PORT, () => {
   const isProd = process.env.NODE_ENV === 'production';
-  console.log(`[server] 再塑通 backend v5.0 已启动 (${isProd ? '生产' : '开发'}模式)`);
+  console.log(`[server] 再塑通 backend v7.0 已启动 (${isProd ? '生产' : '开发'}模式)`);
   console.log(`[server] HTTP:  http://0.0.0.0:${PORT}`);
   console.log(`[server] WS:    ws://0.0.0.0:${PORT}/ws`);
-  console.log('[server] DB:    ./data/zaisutong.db');
+  console.log(`[server] DB:    ${DB_TYPE} | Storage: ${storage.STORAGE_TYPE}`);
 
   // 启动外部数据采集定时调度
   try {

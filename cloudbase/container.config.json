@@ -1,0 +1,39 @@
+{
+  "name": "zaisutong",
+  "description": "再塑通 RePlasMatch — 塑料循环经济撮合平台",
+  "containerPort": 3456,
+  "envParams": {
+    "NODE_ENV": "production",
+    "DB_TYPE": "sqlite",
+    "STORAGE_TYPE": "local",
+    "PORT": "3456",
+    "JWT_SECRET": "zaisutong_cloud_jwt_2026_prod",
+    "REFRESH_SECRET": "zaisutong_cloud_refresh_2026_prod",
+    "JWT_EXPIRES_IN": "7d",
+    "ALLOWED_ORIGIN": "*",
+    "WS_ALLOWED_ORIGINS": "*",
+    "RATE_LIMIT_MAX": "200",
+    "RATE_LIMIT_WINDOW_MS": "60000"
+  },
+  "cpu": 1,
+  "mem": 2,
+  "minNum": 1,
+  "maxNum": 3,
+  "policyType": "cpu",
+  "policyThreshold": 60,
+  "customLogs": "stdout",
+  "initialDelaySeconds": 10,
+  "hasInternetAccess": true,
+  "vpc": {
+    "vpcId": "",
+    "subnetId": ""
+  },
+  "volumes": [
+    {
+      "name": "data",
+      "mountPath": "/app/backend/data",
+      "sizeLimit": "1Gi",
+      "storageType": "cloudDisk"
+    }
+  ]
+}

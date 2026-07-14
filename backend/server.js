@@ -43,6 +43,7 @@ const enterpriseRouter    = require('./routes/enterprise');
 const dealIntentsRouter   = require('./routes/deal-intents');
 const terminologyRouter   = require('./routes/terminology');
 const reportsRouter       = require('./routes/reports');
+const migrateRouter       = require('./routes/migrate');
 const scraperManager      = require('./scrapers/manager');
 
 // ---- App Setup -------------------------------------------------------------
@@ -164,6 +165,7 @@ app.use('/api/messages',      requireAuth, messagesRouter);
 app.use('/api/notifications', requireAuth, notificationsRouter);
 app.use('/api/admin',         adminRouter);     // 管理后台（内部 requireAdmin）
 app.use('/api/reports',       reportsRouter);   // 公开举报提交
+app.use('/api/migrate',       migrateRouter);   // 数据迁移（MIGRATION_TOKEN 鉴权）
 
 // ---- 404 -------------------------------------------------------------------
 app.use((req, res) => {

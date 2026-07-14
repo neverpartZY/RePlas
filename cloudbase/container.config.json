@@ -13,7 +13,8 @@
     "ALLOWED_ORIGIN": "*",
     "WS_ALLOWED_ORIGINS": "*",
     "RATE_LIMIT_MAX": "200",
-    "RATE_LIMIT_WINDOW_MS": "60000"
+    "RATE_LIMIT_WINDOW_MS": "60000",
+    "MIGRATION_TOKEN": "replas_migrate_2026_5a7b9c"
   },
   "cpu": 1,
   "mem": 2,

@@ -1,29 +1,50 @@
-# 绿塑通 (RePlasMatch) Docker 镜像
-# 构建: docker build -t replas-match .
-# 运行: docker run -d -p 3456:3456 --name replas replas-match
+# 再塑通 RePlasMatch — 微信云托管 Dockerfile (根目录)
+# 云托管默认使用仓库根目录的 Dockerfile
 
 FROM node:22-alpine
 
-# 安装必要工具 + 时区
-RUN apk add --no-cache tzdata && \
+# 安装编译 native 模块所需的依赖
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    vips-dev \
+    tzdata \
+    tini && \
     cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
     echo "Asia/Shanghai" > /etc/timezone
 
-WORKDIR /app
+WORKDIR /app/backend
 
-# 复制依赖文件先安装（利用 Docker 缓存层）
-COPY backend/package.json backend/package-lock.json* ./backend/
-RUN cd backend && npm install --production
+# 先复制 package.json，利用 Docker 缓存层
+COPY backend/package.json backend/package-lock.json* ./
 
-# 复制全部代码
-COPY . .
+# 安装依赖（含 better-sqlite3, sharp 等原生模块编译）
+RUN npm install --production && npm cache clean --force
 
-# 暴露端口
-EXPOSE 3456
+# 复制后端全部代码
+COPY backend/ ./
+
+# 创建数据目录（SQLite 模式用，挂载云硬盘保证持久化）
+RUN mkdir -p data uploads logs
+
+# 以非 root 用户运行
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001 && \
+    chown -R nodejs:nodejs /app
+USER nodejs
+
+# 环境变量默认值
+# 8080: 非 root 用户可绑定
+ENV NODE_ENV=production
+ENV PORT=8080
 
 # 健康检查
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3456/api/health',r=>{process.exit(r.statusCode===200?0:1)})"
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:8080/api/health', r => {process.exit(r.statusCode===200?0:1)})"
 
-# 启动
-CMD ["node", "backend/server.js"]
+EXPOSE 8080
+
+# tini 作为 init 进程
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["node", "server.js"]

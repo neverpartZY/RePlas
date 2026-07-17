@@ -116,6 +116,15 @@ router.get('/export', async (req, res) => {
   }
 });
 
+// ---- 清空指定表 ----
+async function clearTable(tableName) {
+  if (isMySQL) {
+    await db.prepare(`DELETE FROM \`${tableName}\``).run();
+  } else {
+    db.prepare(`DELETE FROM "${tableName}"`).run();
+  }
+}
+
 // ---- 导入数据（JSON） ----
 router.post('/import', async (req, res) => {
   const { tables: tableList, data, clearFirst } = req.body;
@@ -126,20 +135,45 @@ router.post('/import', async (req, res) => {
   const results = {};
   const errors = [];
 
-  // 依赖顺序
-  const orderedTables = ['users', 'external_listings', 'price_history', 'prices',
+  // 依赖顺序（从表优先清空，主表优先导入）
+  const clearOrder = ['enterprise_samples', 'audit_logs', 'notifications', 'messages',
+    'matches', 'deal_intents', 'evaluations', 'upload_images', 'vision_records',
+    'listings', 'price_history', 'prices', 'reports',
+    'external_listings', 'login_attempts', 'refresh_tokens', 'sms_codes', 'users'];
+
+  const importOrder = ['users', 'external_listings', 'price_history', 'prices',
     'reports', 'refresh_tokens', 'sms_codes', 'login_attempts',
     'deal_intents', 'evaluations', 'upload_images', 'vision_records',
     'listings', 'matches', 'messages', 'notifications', 'audit_logs',
     'enterprise_samples'];
 
   const allTableNames = tableList || Object.keys(data);
-  for (const t of allTableNames) {
-    if (!orderedTables.includes(t)) orderedTables.push(t);
+
+  // 禁用 MySQL 外键和检查约束
+  if (isMySQL && clearFirst) {
+    await db.prepare('SET FOREIGN_KEY_CHECKS = 0').run();
+    // 对于有 CHECK 约束的表，尝试禁用（MySQL 8.0.16+）
+    try { await db.prepare('SET SESSION check_constraint_checks = 0').run(); } catch (e) {}
   }
 
-  // 按顺序处理每个表
-  for (const tableName of orderedTables) {
+  // Step A: 如果需要清空，先清空所有指定表（按依赖倒序：从表先清）
+  if (clearFirst) {
+    for (const tableName of clearOrder) {
+      if (!allTableNames.includes(tableName)) continue;
+      // 只清空存在的表
+      const exists = await tableExists(tableName);
+      if (!exists) continue;
+      try {
+        await clearTable(tableName);
+      } catch (e) {
+        errors.push(`${tableName} clear: ${e.message}`);
+      }
+    }
+  }
+
+  // Step B: 按顺序导入数据
+  for (const tableName of importOrder) {
+    if (!allTableNames.includes(tableName)) continue;
     const rows = data[tableName];
     if (!rows || !Array.isArray(rows) || rows.length === 0) {
       results[tableName] = { rows: 0, skipped: true };
@@ -164,18 +198,6 @@ router.post('/import', async (req, res) => {
     }
 
     try {
-      // 可选：清空旧数据
-      if (clearFirst) {
-        if (isMySQL) {
-          // MySQL 外键约束：临时禁用检查，清空后重新启用
-          await db.prepare('SET FOREIGN_KEY_CHECKS = 0').run();
-          await db.prepare(`DELETE FROM \`${tableName}\``).run();
-          await db.prepare('SET FOREIGN_KEY_CHECKS = 1').run();
-        } else {
-          db.prepare(`DELETE FROM "${tableName}"`).run();
-        }
-      }
-
       let inserted = 0;
       // 取第一行数据来确定哪些列有值
       const firstRow = rows[0];
@@ -238,6 +260,12 @@ router.post('/import', async (req, res) => {
       errors.push(`${tableName}: ${e.message}`);
       results[tableName] = { rows: 0, error: e.message };
     }
+  }
+
+  // 恢复 MySQL 约束检查
+  if (isMySQL && clearFirst) {
+    await db.prepare('SET FOREIGN_KEY_CHECKS = 1').run();
+    try { await db.prepare('SET SESSION check_constraint_checks = 1').run(); } catch (e) {}
   }
 
   res.json({

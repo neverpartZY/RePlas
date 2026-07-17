@@ -104,7 +104,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json({ limit: '10mb' }));
 
 // Static file serving for uploaded images（本地模式；云托管模式走 COS URL）
 if (storage.STORAGE_TYPE !== 'cos') {

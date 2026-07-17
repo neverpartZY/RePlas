@@ -42,15 +42,41 @@ async function getTableList() {
   }
 }
 
-// ---- 获取表列名（兼容 SQLite & MySQL） ----
-async function getColumnNames(tableName) {
+// ---- 获取表列信息（兼容 SQLite & MySQL） ----
+// 返回 { name, nullable, type } 数组
+async function getColumnInfo(tableName) {
   if (isMySQL) {
     const rows = await db.prepare(`SHOW COLUMNS FROM \`${tableName}\``).all();
-    return rows.map(r => r.Field);
+    return rows.map(r => ({
+      name: r.Field,
+      nullable: r.Null === 'YES',
+      type: (r.Type || '').toLowerCase()
+    }));
   } else {
     const rows = db.prepare(`PRAGMA table_info("${tableName}")`).all();
-    return rows.map(r => r.name);
+    return rows.map(r => ({
+      name: r.name,
+      nullable: !r.notnull || r.notnull === 0,
+      type: (r.type || '').toLowerCase()
+    }));
   }
+}
+
+// ---- 获取表列名（兼容 SQLite & MySQL） ----
+async function getColumnNames(tableName) {
+  const info = await getColumnInfo(tableName);
+  return info.map(c => c.name);
+}
+
+// NOT NULL 列缺失时的默认值
+function defaultForType(type) {
+  if (!type) return '';
+  if (type.includes('int')) return 0;
+  if (type.includes('real') || type.includes('float') || type.includes('double') || type.includes('decimal')) return 0;
+  if (type.includes('datetime') || type.includes('timestamp')) {
+    return new Date().toISOString().replace('T', ' ').substring(0, 19);
+  }
+  return '';
 }
 
 // ---- 检查表是否存在 ----
@@ -127,10 +153,10 @@ router.post('/import', async (req, res) => {
       continue;
     }
 
-    // 获取列名
-    let colNames;
+    // 获取目标表列信息（含 NULL 约束）
+    let columnInfo;
     try {
-      colNames = await getColumnNames(tableName);
+      columnInfo = await getColumnInfo(tableName);
     } catch (e) {
       errors.push(`${tableName}: ${e.message}`);
       results[tableName] = { rows: 0, error: e.message };
@@ -151,11 +177,35 @@ router.post('/import', async (req, res) => {
       }
 
       let inserted = 0;
-      const quotedCols = isMySQL
-        ? colNames.map(c => `\`${c}\``).join(',')
-        : colNames.map(c => `"${c}"`).join(',');
+      // 取第一行数据来确定哪些列有值
+      const firstRow = rows[0];
+      const rowKeys = Object.keys(firstRow);
 
-      const placeholders = colNames.map(() => '?').join(',');
+      // 只取交集：MySQL 列 ∩ 数据列。对于 NOT NULL 但数据中不存在的列，填入默认值
+      const matchedCols = [];
+      const defaultValues = [];
+      for (const ci of columnInfo) {
+        if (rowKeys.includes(ci.name)) {
+          matchedCols.push(ci.name);
+          defaultValues.push(null); // 占位，实际值从数据取
+        } else if (!ci.nullable) {
+          // NOT NULL 列在数据中不存在 → 填默认值
+          matchedCols.push(ci.name);
+          defaultValues.push(defaultForType(ci.type));
+        }
+        // nullable 且在数据中不存在的列 → 跳过（MySQL 会用 DEFAULT 或 NULL）
+      }
+
+      if (matchedCols.length === 0) {
+        results[tableName] = { rows: 0, error: 'no matching columns' };
+        continue;
+      }
+
+      const quotedCols = isMySQL
+        ? matchedCols.map(c => `\`${c}\``).join(',')
+        : matchedCols.map(c => `"${c}"`).join(',');
+
+      const placeholders = matchedCols.map(() => '?').join(',');
 
       // MySQL 用 REPLACE INTO，SQLite 用 INSERT OR REPLACE
       const insertSQL = isMySQL
@@ -163,10 +213,13 @@ router.post('/import', async (req, res) => {
         : `INSERT OR REPLACE INTO "${tableName}" (${quotedCols}) VALUES (${placeholders})`;
 
       for (const row of rows) {
-        const values = colNames.map(col => {
-          const val = row[col];
-          if (val === undefined) return null;
-          if (val !== null && typeof val === 'object') {
+        const values = matchedCols.map((colName, idx) => {
+          // 如果这个列有默认值（即数据中不存在），使用默认值
+          if (defaultValues[idx] !== null) return defaultValues[idx];
+          
+          const val = row[colName];
+          if (val === undefined || val === null) return null;
+          if (typeof val === 'object') {
             return JSON.stringify(val);
           }
           return val;

@@ -1,0 +1,54 @@
+{
+  "name": "rematch-miniapp",
+  "version": "1.0.0",
+  "description": "AI废塑再塑自动撮合小程序 - AI驱动的塑料回收再生两极供需撮合引擎",
+  "main": "main.js",
+  "scripts": {
+    "dev:mp-weixin": "cross-env NODE_ENV=development UNI_PLATFORM=mp-weixin vue-cli-service uni-build --watch",
+    "build:mp-weixin": "cross-env NODE_ENV=production UNI_PLATFORM=mp-weixin vue-cli-service uni-build",
+    "build:h5": "cross-env NODE_ENV=production UNI_PLATFORM=h5 vue-cli-service uni-build",
+    "dev:h5": "cross-env NODE_ENV=development UNI_PLATFORM=h5 vue-cli-service uni-serve",
+    "lint": "eslint --ext .js,.vue ./",
+    "upload": "node upload.js",
+    "deploy": "cross-env NODE_ENV=production UNI_PLATFORM=mp-weixin vue-cli-service uni-build && node upload.js"
+  },
+  "dependencies": {
+    "@dcloudio/uni-app": "2.0.2-5010520260709001",
+    "@dcloudio/uni-h5": "^2.0.2-5010520260709001",
+    "@dcloudio/uni-i18n": "2.0.2-5010520260709001",
+    "@dcloudio/uni-mp-weixin": "2.0.2-5010520260709001",
+    "@dcloudio/uni-stat": "2.0.2-5010520260709001",
+    "event-pubsub": "^4.3.0",
+    "regenerator-runtime": "^0.14.1",
+    "vue": "2.6.14",
+    "vuex": "3.6.2"
+  },
+  "devDependencies": {
+    "@dcloudio/uni-cli-i18n": "^2.0.2-5010520260709001",
+    "@dcloudio/uni-cli-shared": "2.0.2-5010520260709001",
+    "@dcloudio/uni-template-compiler": "2.0.2-5010520260709001",
+    "@dcloudio/vue-cli-plugin-uni": "2.0.2-5010520260709001",
+    "@dcloudio/vue-cli-plugin-uni-optimize": "2.0.2-5010520260709001",
+    "@dcloudio/webpack-uni-mp-loader": "2.0.2-5010520260709001",
+    "@dcloudio/webpack-uni-pages-loader": "2.0.2-5010520260709001",
+    "@vue/cli-plugin-babel": "^5.0.9",
+    "@vue/cli-plugin-eslint": "^5.0.9",
+    "@vue/cli-service": "^5.0.9",
+    "cross-env": "^7.0.3",
+    "eslint": "^8.30.0",
+    "mini-types": "^0.1.6",
+    "miniprogram-api-typings": "^3.12.0",
+    "miniprogram-ci": "^2.1.31",
+    "postcss-comment": "^2.0.0",
+    "sass": "^1.57.1",
+    "sass-loader": "^10.2.0",
+    "vue-template-compiler": "2.6.14"
+  },
+  "browserslist": [
+    "Android >= 4.4",
+    "ios >= 9"
+  ],
+  "uni-app": {
+    "scripts": {}
+  }
+}

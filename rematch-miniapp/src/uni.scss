@@ -1,0 +1,101 @@
+/* uni-app 全局样式变量 */
+
+/* 主色调 */
+$primary-color: #07C160;
+$primary-light: #69e0a2;
+$primary-dark: #059a4c;
+
+/* 辅助色 */
+$success-color: #07C160;
+$warning-color: #FF9500;
+$danger-color: #FA5151;
+$info-color: #1677FF;
+
+/* 背景色 */
+$bg-color: #F5F5F5;
+$bg-white: #FFFFFF;
+$bg-card: #FFFFFF;
+
+/* 文字色 */
+$text-primary: #1A1A1A;
+$text-secondary: #666666;
+$text-hint: #999999;
+$text-disabled: #CCCCCC;
+
+/* 边框色 */
+$border-color: #E5E5E5;
+$border-light: #F0F0F0;
+
+/* 匹配分数颜色 */
+$match-high: #07C160;
+$match-medium: #1677FF;
+$match-low: #FF9500;
+
+/* 圆角 */
+$radius-sm: 8rpx;
+$radius-md: 16rpx;
+$radius-lg: 24rpx;
+$radius-round: 50%;
+
+/* 阴影 */
+$shadow-sm: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+$shadow-md: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+$shadow-lg: 0 8rpx 32rpx rgba(0, 0, 0, 0.12);
+
+/* 字体大小 */
+$font-xs: 20rpx;
+$font-sm: 24rpx;
+$font-md: 28rpx;
+$font-lg: 32rpx;
+$font-xl: 36rpx;
+$font-xxl: 44rpx;
+
+/* 间距 */
+$spacing-xs: 8rpx;
+$spacing-sm: 16rpx;
+$spacing-md: 24rpx;
+$spacing-lg: 32rpx;
+$spacing-xl: 48rpx;
+
+/* 通用工具类 */
+.card {
+  background: $bg-card;
+  border-radius: $radius-md;
+  box-shadow: $shadow-sm;
+  padding: $spacing-md;
+  margin: $spacing-sm;
+}
+
+.flex-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-between {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-primary {
+  color: $primary-color;
+}
+
+.text-secondary {
+  color: $text-secondary;
+}
+
+.text-hint {
+  color: $text-hint;
+}

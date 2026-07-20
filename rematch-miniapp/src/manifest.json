@@ -1,0 +1,30 @@
+{
+  "name": "AI废塑再塑自动撮合",
+  "appid": "__UNI__REMATCH",
+  "description": "AI驱动的塑料回收再生两级供需撮合引擎 — 再塑通",
+  "versionName": "2.0.0",
+  "versionCode": "200",
+  "transformPx": false,
+  "mp-weixin": {
+    "appid": "wxa2faf03e11d14fed",
+    "setting": {
+      "urlCheck": false,
+      "es6": true,
+      "postcss": true,
+      "minified": true,
+      "minifyJS": true,
+      "minifyWXML": true,
+      "minifyWXSS": true
+    },
+    "lazyCodeLoading": "requiredComponents",
+    "permission": {
+      "scope.userLocation": {
+        "desc": "用于展示附近回收企业"
+      }
+    }
+  },
+  "uniStatistics": {
+    "enable": false
+  },
+  "vueVersion": "2"
+}

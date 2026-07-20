@@ -85,7 +85,7 @@ function normalizeRegion(location) {
 function normalizeCategory(material) {
   if (!material) return null;
   const upper = material.toUpperCase();
-  const map = { 'PET': 'PET', 'PP': 'PP', 'PE': 'LDPE', 'HDPE': 'HDPE', 'LDPE': 'LDPE',
+  const map = { 'PET': 'PET', 'PP': 'PP', 'HDPE': 'HDPE', 'LDPE': 'LDPE', 'PE': 'LDPE',
     'ABS': 'ABS', 'PC': 'PC', 'PS': 'PS', 'PA': 'PA', 'PA6': 'PA', 'PA66': 'PA', 'PVC': 'PVC' };
   for (const [k, v] of Object.entries(map)) {
     if (upper.includes(k)) return v;

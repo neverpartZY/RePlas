@@ -282,9 +282,9 @@ export default {
       const diagItems = [];
       let localOk = 0, backendOk = 0, externalOk = 0, pricesOk = 0;
 
-      // 检查云环境
-      this.cloudOk = !!(typeof wx !== 'undefined' && wx.cloud);
-      diagItems.push({ name: '微信云环境', ok: this.cloudOk, error: this.cloudOk ? '已就绪' : '未初始化 cloud' });
+      // 检查网络环境
+      this.cloudOk = true; // wx.request 不依赖 wx.cloud
+      diagItems.push({ name: '网络环境', ok: true, error: 'wx.request 模式' });
 
       // 1. 本地缓存（用户自己发布的数据）
       try {
@@ -427,14 +427,9 @@ export default {
       } catch (e) {
         console.error('[Index] 行情加载失败:', e);
       }
-      // 使用默认行情兜底
-      this.priceSnapshot = [
-        { name: 'PET瓶片', currentPrice: 5800, change: 150, changePercent: 2.6 },
-        { name: 'HDPE粉碎料', currentPrice: 4200, change: -80, changePercent: -1.9 },
-        { name: 'PP编织袋', currentPrice: 3100, change: 0, changePercent: 0 },
-        { name: 'ABS破碎料', currentPrice: 9500, change: 300, changePercent: 3.2 }
-      ];
-      return 4; // 默认数据
+      // API 失败时不使用假数据兜底，保持空数组让诊断面板显示真实状态
+      this.priceSnapshot = [];
+      return 0;
     },
 
     updateGreeting() {

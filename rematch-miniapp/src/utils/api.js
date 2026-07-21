@@ -1,8 +1,8 @@
 /**
- * 再塑通 小程序 HTTP API 封装 v3
- * 使用 wx.request 直接调用云托管公网 URL，绕过 callContainer（多种路径 bug 无法修复）
+ * 再塑通 小程序 HTTP API 封装 v5
+ * 使用 wx.request 直连云托管公网 URL
  *
- * 云托管自动将服务域名加入小程序 request 合法域名，无需额外配置
+ * 云托管公网地址已加入小程序 request 合法域名白名单
  *
  * 使用方式：
  *   import api from '@/utils/api.js';
@@ -11,7 +11,7 @@
  */
 
 // ================================================================
-// 云托管公网访问配置
+// 配置
 // ================================================================
 const API_BASE = 'https://replas1-280446-9-1452497195.sh.run.tcloudbase.com';
 
@@ -43,7 +43,7 @@ function hasToken() {
 }
 
 // ================================================================
-// 通用 HTTP 请求（wx.request 直连，不经过 callContainer）
+// 通用 HTTP 请求（wx.request）
 // ================================================================
 
 /**
@@ -62,7 +62,7 @@ function _doRequest(method, path, data, noAuth, retryCount) {
   return new Promise((resolve) => {
     const header = {};
 
-    // POST/PATCH/PUT 设置 Content-Type，GET 不设置
+    // POST/PATCH/PUT 设置 Content-Type
     if (method !== 'GET') {
       header['Content-Type'] = 'application/json';
     }
@@ -71,9 +71,9 @@ function _doRequest(method, path, data, noAuth, retryCount) {
       header['Authorization'] = 'Bearer ' + getToken();
     }
 
-    // 构建完整 URL（GET 时 data 作为 query string 拼接）
+    // 构建完整 URL：GET 时 data 拼为 query string
     let url = API_BASE + path;
-    const reqData = method === 'GET' ? undefined : data;
+    let body = undefined;
 
     if (method === 'GET' && data && typeof data === 'object') {
       const params = [];
@@ -85,13 +85,15 @@ function _doRequest(method, path, data, noAuth, retryCount) {
       if (params.length > 0) {
         url += '?' + params.join('&');
       }
+    } else if (method !== 'GET') {
+      body = data;
     }
 
     wx.request({
       url: url,
       method: method,
       header: header,
-      data: reqData,
+      data: body,
       timeout: 30000,
       success: (res) => {
         let body = res.data;
@@ -100,32 +102,37 @@ function _doRequest(method, path, data, noAuth, retryCount) {
         }
         if (!body || typeof body !== 'object') body = {};
 
-        console.log('[API]', method, path, '→', res.statusCode, 'keys:', Object.keys(body).join(','));
+        const statusCode = res.statusCode || 200;
+        console.log('[API]', method, path, '\u2192', statusCode, 'keys:', Object.keys(body).join(','));
 
-        if (res.statusCode === 401) {
+        if (statusCode === 401) {
           removeToken();
           uni.removeStorageSync(USER_KEY);
           uni.$emit && uni.$emit('auth_expired');
           return resolve({ success: false, error: body.error || '登录已过期，请重新登录', _code: 401 });
         }
 
-        if (res.statusCode >= 200 && res.statusCode < 300) {
+        if (statusCode >= 200 && statusCode < 300) {
           resolve(body);
         } else {
-          resolve({ success: false, error: body.error || `请求失败 (${res.statusCode})`, _code: res.statusCode, _path: path });
+          resolve({ success: false, error: body.error || '请求失败 (' + statusCode + ')', _code: statusCode, _path: path });
         }
       },
       fail: (err) => {
         const errMsg = (err && err.errMsg) ? err.errMsg : JSON.stringify(err).substring(0, 100);
-        console.error('[API] wx.request fail:', method, path, errMsg);
+        console.error('[API] wx.request fail:', method, url.substring(0, 80), errMsg);
+
+        // 自动重试一次（1.5s 后）
         if (retryCount < 1) {
-          console.log('[API] 自动重试...');
+          console.log('[API] 自动重试 (' + (retryCount + 1) + '/1)...');
           setTimeout(() => {
             _doRequest(method, path, data, noAuth, retryCount + 1)
               .then(resolve);
           }, 1500);
           return;
         }
+
+        // 提供友好的错误信息，包含 errMsg 用于诊断
         resolve({ success: false, error: '网络异常: ' + errMsg, _code: -1, _path: path });
       },
     });
@@ -142,7 +149,7 @@ function _doRequest(method, path, data, noAuth, retryCount) {
  * @param {Object} userInfo - 可选，{ nickname, avatarUrl }
  */
 async function login(userInfo = {}) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     wx.login({
       success: async (loginRes) => {
         if (!loginRes.code) {
@@ -374,7 +381,7 @@ function getDefaultPrices(category) {
 }
 
 // ================================================================
-// 发布 API（可选：未来替换 localStorage 直接写入）
+// 发布 API
 // ================================================================
 
 /**

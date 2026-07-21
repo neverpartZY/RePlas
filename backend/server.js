@@ -148,9 +148,10 @@ app.use('/api/health',    (req, res) => {
 });
 
 // ---- 数据库备份导出（MIGRATION_TOKEN 鉴权）-----------------------------------
+// 注意：放在 /api/backup/db 而非 /api/admin/backup，避免被 requireAuth 拦截
 const fs = require('fs');
 const MIGRATION_TOKEN = process.env.MIGRATION_TOKEN || '';
-app.get('/api/admin/backup', (req, res) => {
+app.get('/api/backup/db', (req, res) => {
   // 鉴权
   if (!MIGRATION_TOKEN) {
     return res.status(403).json({ success: false, error: '备份功能未启用（需设置 MIGRATION_TOKEN）' });

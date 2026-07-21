@@ -25,7 +25,7 @@ BACKUP_FILE="$BACKUP_DIR/zaisutong_${TIMESTAMP}.db"
 HTTP_CODE=$(curl -s -w "%{http_code}" -o "$BACKUP_FILE" \
   -H "Authorization: Bearer ${TOKEN}" \
   --connect-timeout 30 --max-time 120 \
-  "$API_BASE/api/admin/backup")
+  "$API_BASE/api/backup/db")
 
 if [ "$HTTP_CODE" != "200" ]; then
   echo "$LOG_TAG 备份失败! HTTP $HTTP_CODE"

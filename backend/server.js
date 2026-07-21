@@ -147,6 +147,50 @@ app.use('/api/health',    (req, res) => {
   res.json(health);
 });
 
+// ---- 数据库备份导出（MIGRATION_TOKEN 鉴权）-----------------------------------
+const fs = require('fs');
+const MIGRATION_TOKEN = process.env.MIGRATION_TOKEN || '';
+app.get('/api/admin/backup', (req, res) => {
+  // 鉴权
+  if (!MIGRATION_TOKEN) {
+    return res.status(403).json({ success: false, error: '备份功能未启用（需设置 MIGRATION_TOKEN）' });
+  }
+  const auth = (req.headers['authorization'] || '').replace(/^Bearer\s+/i, '');
+  if (auth !== MIGRATION_TOKEN) {
+    return res.status(401).json({ success: false, error: '无效的备份令牌' });
+  }
+
+  try {
+    if (DB_TYPE === 'sqlite') {
+      const dbPath = db.name; // better-sqlite3 Database.name 返回文件路径
+      if (!fs.existsSync(dbPath)) {
+        return res.status(500).json({ success: false, error: '数据库文件不存在' });
+      }
+      const stat = fs.statSync(dbPath);
+      const fileName = `zaisutong_backup_${new Date().toISOString().replace(/[:.]/g, '-')}.db`;
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      res.setHeader('Content-Length', stat.size);
+      res.setHeader('X-Backup-Size', stat.size);
+      res.setHeader('X-Backup-Timestamp', new Date().toISOString());
+      const readStream = fs.createReadStream(dbPath);
+      readStream.pipe(res);
+      readStream.on('error', (err) => {
+        console.error('[backup] Stream error:', err.message);
+        if (!res.headersSent) {
+          res.status(500).json({ success: false, error: '备份文件读取失败' });
+        }
+      });
+    } else {
+      // MySQL 模式：导出 SQL dump
+      res.status(501).json({ success: false, error: 'MySQL 备份暂不支持，请使用控制台自动备份' });
+    }
+  } catch (err) {
+    console.error('[backup] Error:', err.message);
+    res.status(500).json({ success: false, error: '备份失败: ' + err.message });
+  }
+});
+
 // P0 新路由 — 图片上传需支持 multipart，单独放开 Content-Type 限制
 app.use('/api/vision', (req, res, next) => {
   // vision 路由内部使用 multer，需要跳过 JSON-only 检查

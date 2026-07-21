@@ -10,7 +10,7 @@
 set -e
 
 BACKUP_DIR="/opt/backups/replas-match"
-API_BASE="https://replas1-280446-9-1452497195.sh.run.tcloudbase.com"
+API_BASE="${API_BASE:-https://replas1-280446-9-1452497195.sh.run.tcloudbase.com}"
 TOKEN="${MIGRATION_TOKEN:-replas_migrate_2026_5a7b9c}"
 RETENTION_DAYS=7
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)

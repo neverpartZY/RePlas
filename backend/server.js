@@ -192,6 +192,74 @@ app.get('/api/backup/db', (req, res) => {
   }
 });
 
+// ---- 数据库恢复上传（MIGRATION_TOKEN 鉴权）-----------------------------------
+// 需要 raw body，不能经过 express.json()
+app.put('/api/backup/db', express.raw({ type: '*/*', limit: '50mb' }), (req, res) => {
+  if (!MIGRATION_TOKEN) {
+    return res.status(500).json({ success: false, error: 'MIGRATION_TOKEN 未配置' });
+  }
+  const auth = (req.headers['authorization'] || '').replace(/^Bearer\s+/i, '');
+  if (auth !== MIGRATION_TOKEN) {
+    return res.status(401).json({ success: false, error: '无效的恢复令牌' });
+  }
+
+  if (DB_TYPE !== 'sqlite') {
+    return res.status(400).json({ success: false, error: '仅 SQLite 模式支持在线恢复' });
+  }
+
+  const buffer = req.body;
+  if (!buffer || !Buffer.isBuffer(buffer) || buffer.length < 16) {
+    return res.status(400).json({ success: false, error: '请上传有效的数据库文件 (application/octet-stream)' });
+  }
+
+  // 验证 SQLite 文件头
+  if (buffer.toString('utf8', 0, 16) !== 'SQLite format 3\x00') {
+    return res.status(400).json({ success: false, error: '无效的 SQLite 数据库文件' });
+  }
+
+  const dbPath = db.name;
+  const backupPath = dbPath + '.backup.' + Date.now();
+
+  // 先备份当前文件（如果存在）
+  if (fs.existsSync(dbPath)) {
+    fs.copyFileSync(dbPath, backupPath);
+    console.log('[restore] 当前数据库已备份到:', backupPath);
+  }
+
+  // 写入新文件
+  fs.writeFileSync(dbPath, buffer);
+  console.log(`[restore] 数据库已恢复，大小: ${(buffer.length / 1024).toFixed(1)} KB`);
+
+  // 验证新文件可打开
+  try {
+    const testDb = require('better-sqlite3')(dbPath, { readonly: true });
+    const tables = testDb.prepare("SELECT COUNT(*) as n FROM sqlite_master WHERE type='table'").get();
+    testDb.close();
+    console.log(`[restore] 验证通过，${tables.n} 个表`);
+
+    // 恢复成功后删除临时备份
+    if (fs.existsSync(backupPath)) {
+      fs.unlinkSync(backupPath);
+    }
+
+    res.json({
+      success: true,
+      message: '数据库恢复成功，请重启容器生效',
+      size: buffer.length,
+      tables: tables.n,
+      needRestart: true,
+    });
+  } catch (verifyErr) {
+    // 验证失败，回滚
+    console.error('[restore] 新数据库验证失败，回滚:', verifyErr.message);
+    if (fs.existsSync(backupPath)) {
+      fs.copyFileSync(backupPath, dbPath);
+      fs.unlinkSync(backupPath);
+    }
+    res.status(400).json({ success: false, error: '数据库文件损坏，已自动回滚' });
+  }
+});
+
 // P0 新路由 — 图片上传需支持 multipart，单独放开 Content-Type 限制
 app.use('/api/vision', (req, res, next) => {
   // vision 路由内部使用 multer，需要跳过 JSON-only 检查

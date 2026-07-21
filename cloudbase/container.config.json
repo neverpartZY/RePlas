@@ -19,7 +19,7 @@
   "cpu": 1,
   "mem": 2,
   "minNum": 1,
-  "maxNum": 3,
+  "maxNum": 1,
   "policyType": "cpu",
   "policyThreshold": 60,
   "customLogs": "stdout",

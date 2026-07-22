@@ -17,16 +17,16 @@ export default {
   onLaunch() {
     console.log('再塑通 rematch-miniapp v2.3 启动 (callContainer内网直连云托管)');
 
-    // 云环境初始化 — callContainer 前提，必须成功
+    // callContainer 前提：wx.cloud.init()（官方标准：不传 env 参数）
     if (typeof wx !== 'undefined' && wx.cloud) {
       try {
-        wx.cloud.init({ env: 'prod-d1glhei0i1a9b8934' });
-        console.log('[App] wx.cloud 初始化成功');
+        wx.cloud.init();
+        console.log('[App] wx.cloud.init() 完成');
       } catch (e) {
-        console.error('[App] wx.cloud 初始化失败 (callContainer 将不可用):', e);
+        console.error('[App] wx.cloud.init() 失败:', e);
       }
     } else {
-      console.error('[App] wx.cloud 不可用，callContainer 将无法工作');
+      console.error('[App] wx.cloud 不可用');
     }
 
     // 监听 token 过期事件

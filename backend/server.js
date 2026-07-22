@@ -94,6 +94,7 @@ app.use('/api/auth/register', authLimiter);
 // Content-Type check (skip for image upload routes)
 app.use((req, res, next) => {
   if (req.path.startsWith('/api/vision/')) return next();
+  if (req.path.startsWith('/api/backup/db')) return next();
   if (req.path.startsWith('/uploads/')) return next();
   if (['POST', 'PATCH', 'PUT'].includes(req.method)) {
     const ct = req.headers['content-type'] || '';

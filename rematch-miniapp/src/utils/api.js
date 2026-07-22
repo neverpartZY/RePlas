@@ -91,6 +91,7 @@ function _doRequest(method, path, data, noAuth, retryCount) {
       header: header,
       data: Object.keys(cleanData).length > 0 ? cleanData : undefined,
       timeout: 15000, // callContainer 最大 15s
+      apiVersion: 2,  // 避免缓存错误，社区强烈建议
       success: (res) => {
         let body = res.data;
         if (typeof body === 'string') {

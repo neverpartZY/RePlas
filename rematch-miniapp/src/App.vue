@@ -17,17 +17,26 @@ export default {
   onLaunch() {
     console.log('再塑通 rematch-miniapp v2.3 启动 (callContainer内网直连云托管)');
 
-    // callContainer 前提：wx.cloud.init()（官方标准：不传 env 参数）
+    // callContainer 前提：wx.cloud.init（两者都试试）
     if (typeof wx !== 'undefined' && wx.cloud) {
       try {
-        wx.cloud.init();
+        wx.cloud.init({ env: 'prod-d1glhei0i1a9b8934' });
         console.log('[App] wx.cloud.init() 完成');
       } catch (e) {
         console.error('[App] wx.cloud.init() 失败:', e);
+        try {
+          wx.cloud.init(); // 回退：不传参数
+          console.log('[App] wx.cloud.init() 回退完成（无 env）');
+        } catch (e2) {
+          console.error('[App] wx.cloud.init() 彻底失败:', e2);
+        }
       }
     } else {
       console.error('[App] wx.cloud 不可用');
     }
+
+    // 🔍 诊断：直接测试 callContainer
+    this._debugCallContainer();
 
     // 监听 token 过期事件
     uni.$on('auth_expired', () => {
@@ -52,6 +61,38 @@ export default {
   },
 
   methods: {
+    /** 🔍 诊断：测试 callContainer 请求/响应 */
+    _debugCallContainer() {
+      const doTest = (path, method) => {
+        return new Promise((resolve) => {
+          wx.cloud.callContainer({
+            config: { env: 'prod-d1glhei0i1a9b8934' },
+            path: path,
+            method: method,
+            header: { 'X-WX-SERVICE': 'zaisutong' },
+            timeout: 10000,
+            success: (res) => {
+              console.log(`[DEBUG] ${method} ${path} → ${res.statusCode}`, JSON.stringify(res.data).substring(0, 200));
+              resolve({ path, method, statusCode: res.statusCode, data: res.data });
+            },
+            fail: (err) => {
+              console.error(`[DEBUG] ${method} ${path} → FAIL:`, JSON.stringify(err));
+              resolve({ path, method, statusCode: -1, error: err.errMsg || JSON.stringify(err) });
+            }
+          });
+        });
+      };
+
+      // 连续测试几个端点
+      setTimeout(async () => {
+        const results = [];
+        results.push(await doTest('/api/health', 'GET'));
+        results.push(await doTest('/api/listings', 'GET'));
+        results.push(await doTest('/api/debug/echo', 'GET'));
+        console.log('[DEBUG] === 诊断结果 ===', JSON.stringify(results, null, 2));
+      }, 500);
+    },
+
     /** 立即检查未读数并更新 tab badge */
     async checkUnread() {
       try {

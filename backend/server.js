@@ -1,6 +1,6 @@
 /**
- * 再塑通 RePlasMatch — 主服务入口 v5.0
- * Express + WebSocket 后端
+ * 再塑通 RePlasMatch — 主服务入口 v5.1
+ * Express + WebSocket + Seed DB 自动恢复
  */
 
 // 加载环境变量（必须在最前面）

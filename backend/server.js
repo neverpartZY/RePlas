@@ -91,6 +91,35 @@ const authLimiter = rateLimit({
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 
+// ---- 请求诊断日志（临时，排查 callContainer 404）---------------------------
+app.use((req, res, next) => {
+  const wxHeaders = {};
+  for (const key of Object.keys(req.headers)) {
+    if (key.toLowerCase().startsWith('x-wx')) {
+      wxHeaders[key] = req.headers[key];
+    }
+  }
+  console.log(`[REQ] ${req.method} ${req.path} | host=${req.headers.host} | wx-headers=${JSON.stringify(wxHeaders)} | ct=${req.headers['content-type'] || '-'}`);
+  next();
+});
+
+// ---- 调试端点：回显 callContainer 发来的所有请求信息 -------------------------
+app.all('/api/debug/echo', (req, res) => {
+  res.json({
+    success: true,
+    request: {
+      method: req.method,
+      path: req.path,
+      originalUrl: req.originalUrl,
+      baseUrl: req.baseUrl,
+      query: req.query,
+      body: req.body,
+    },
+    headers: req.headers,
+    from: req.ip,
+  });
+});
+
 // Content-Type check (skip for image upload routes)
 app.use((req, res, next) => {
   if (req.path.startsWith('/api/vision/')) return next();
@@ -284,7 +313,8 @@ app.use('/api/migrate',       migrateRouter);   // 数据迁移（MIGRATION_TOKE
 
 // ---- 404 -------------------------------------------------------------------
 app.use((req, res) => {
-  res.status(404).json({ success: false, error: `Route not found: ${req.method} ${req.url}` });
+  console.error(`[404] ${req.method} ${req.url} | path=${req.path} | baseUrl=${req.baseUrl} | host=${req.headers.host}`);
+  res.status(404).json({ success: false, error: `Route not found: ${req.method} ${req.path} (originalUrl: ${req.originalUrl})` });
 });
 
 // ---- Error handler ---------------------------------------------------------

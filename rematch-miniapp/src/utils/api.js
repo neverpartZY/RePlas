@@ -1,8 +1,12 @@
 /**
- * 再塑通 小程序 HTTP API 封装 v5
- * 使用 wx.request 直连云托管公网 URL
+ * 再塑通 小程序 HTTP API 封装 v6
+ * 使用 wx.cloud.callContainer 走内网访问云托管
  *
- * 云托管公网地址已加入小程序 request 合法域名白名单
+ * 优势：
+ *   - 无需配置服务器域名白名单
+ *   - 走微信内网，不消耗公网流量
+ *   - 天然免疫 DDoS
+ *   - 可直接获取 openid 等用户信息
  *
  * 使用方式：
  *   import api from '@/utils/api.js';
@@ -13,7 +17,8 @@
 // ================================================================
 // 配置
 // ================================================================
-const API_BASE = 'https://replas1-280446-9-1452497195.sh.run.tcloudbase.com';
+const CLOUD_ENV = 'prod-d1glhei0i1a9b8934';
+const CLOUD_SERVICE = 'zaisutong';
 
 const TOKEN_KEY = 'rematch_token';
 const USER_KEY = 'rematch_user';
@@ -43,14 +48,14 @@ function hasToken() {
 }
 
 // ================================================================
-// 通用 HTTP 请求（wx.request）
+// 通用 HTTP 请求（wx.cloud.callContainer — 内网直连云托管）
 // ================================================================
 
 /**
  * 发起 API 请求
  * @param {string} method - GET | POST | PATCH | PUT | DELETE
  * @param {string} path   - API 路径，如 '/api/auth/me'
- * @param {Object} data   - GET 时转为 URL query，其他方法作为 JSON body
+ * @param {Object} data   - 请求参数（GET 时作为 query，其他方法作为 JSON body）
  * @param {boolean} noAuth - 跳过 token 附加
  * @returns {Promise<Object>} { success, data, error }
  */
@@ -62,39 +67,30 @@ function _doRequest(method, path, data, noAuth, retryCount) {
   return new Promise((resolve) => {
     const header = {};
 
-    // POST/PATCH/PUT 设置 Content-Type
-    if (method !== 'GET') {
-      header['Content-Type'] = 'application/json';
-    }
-
     if (!noAuth && hasToken()) {
       header['Authorization'] = 'Bearer ' + getToken();
     }
 
-    // 构建完整 URL：GET 时 data 拼为 query string
-    let url = API_BASE + path;
-    let body = undefined;
+    // callContainer 必须的 header
+    header['X-WX-SERVICE'] = CLOUD_SERVICE;
 
-    if (method === 'GET' && data && typeof data === 'object') {
-      const params = [];
+    // 清理 data 中的空值（undefined/null/空字符串）
+    const cleanData = {};
+    if (data && typeof data === 'object') {
       for (const key of Object.keys(data)) {
         if (data[key] !== undefined && data[key] !== null && data[key] !== '') {
-          params.push(encodeURIComponent(key) + '=' + encodeURIComponent(data[key]));
+          cleanData[key] = data[key];
         }
       }
-      if (params.length > 0) {
-        url += '?' + params.join('&');
-      }
-    } else if (method !== 'GET') {
-      body = data;
     }
 
-    wx.request({
-      url: url,
+    wx.cloud.callContainer({
+      config: { env: CLOUD_ENV },
+      path: path,
       method: method,
       header: header,
-      data: body,
-      timeout: 30000,
+      data: Object.keys(cleanData).length > 0 ? cleanData : undefined,
+      timeout: 15000, // callContainer 最大 15s
       success: (res) => {
         let body = res.data;
         if (typeof body === 'string') {
@@ -120,7 +116,7 @@ function _doRequest(method, path, data, noAuth, retryCount) {
       },
       fail: (err) => {
         const errMsg = (err && err.errMsg) ? err.errMsg : JSON.stringify(err).substring(0, 100);
-        console.error('[API] wx.request fail:', method, url.substring(0, 80), errMsg);
+        console.error('[API] callContainer fail:', method, path, errMsg);
 
         // 自动重试一次（1.5s 后）
         if (retryCount < 1) {

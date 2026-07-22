@@ -3,7 +3,6 @@ npm-debug.log
 .env.local
 .git
 .gitignore
-data/*.db
 data/backups
 logs/
 .DS_Store

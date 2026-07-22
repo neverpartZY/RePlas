@@ -10,6 +10,39 @@ if (!fs.existsSync(DATA_DIR)) {
 }
 
 const DB_PATH = path.join(DATA_DIR, 'zaisutong.db');
+const SEED_PATH = path.join(DATA_DIR, 'zaisutong_seed.db');
+
+// 自动从 seed 恢复：如果当前数据库为空且 seed 文件存在，复制 seed 覆盖
+function restoreFromSeed() {
+  if (!fs.existsSync(SEED_PATH)) return;
+
+  let needsRestore = false;
+
+  if (!fs.existsSync(DB_PATH)) {
+    needsRestore = true;
+  } else {
+    // 打开只读检查是否有数据
+    try {
+      const probe = new Database(DB_PATH, { readonly: true });
+      const cnt = probe.prepare('SELECT COUNT(*) as n FROM listings').get();
+      probe.close();
+      if (cnt.n === 0) needsRestore = true;
+    } catch (e) {
+      needsRestore = true; // 文件损坏也恢复
+    }
+  }
+
+  if (needsRestore) {
+    // 保留旧文件做备份
+    if (fs.existsSync(DB_PATH)) {
+      fs.copyFileSync(DB_PATH, DB_PATH + '.old.' + Date.now());
+    }
+    fs.copyFileSync(SEED_PATH, DB_PATH);
+    console.log(`[DB] 从 seed 恢复数据库 (${(fs.statSync(DB_PATH).size / 1024).toFixed(0)} KB)`);
+  }
+}
+restoreFromSeed();
+
 const db = new Database(DB_PATH);
 
 // Enable WAL mode for better concurrent performance

@@ -1,9 +1,11 @@
 node_modules/
-backend/data/
+backend/data/*
+!backend/data/zaisutong_seed.db
 backend/uploads/
 *.log
 server.log
 *.db
+!zaisutong_seed.db
 _qa_*
 test_login.json
 _run.js

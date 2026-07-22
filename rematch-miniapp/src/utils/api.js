@@ -18,7 +18,7 @@
 // 配置
 // ================================================================
 const CLOUD_ENV = 'prod-d1glhei0i1a9b8934';
-const CLOUD_SERVICE = 'zaisutong';
+const CLOUD_SERVICE = 'replas1';
 
 const TOKEN_KEY = 'rematch_token';
 const USER_KEY = 'rematch_user';
